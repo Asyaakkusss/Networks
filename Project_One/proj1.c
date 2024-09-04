@@ -16,6 +16,10 @@ int main() {
     char buffer[2939]; 
 
     while (fgets(buffer, sizeof(buffer), file)) {
-
+        printf("%s", buffer); 
     }
+
+    fclose(file); 
+
+    return 0; 
 }
