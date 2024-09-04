@@ -9,7 +9,7 @@ TARGETS=parser
 
 all: $(TARGETS)
 
-parser: parser.o
+proj1: proj1.o
 	$(CC) $(CFLAGS) -o $@ $< 
 
 %.o: %.c
