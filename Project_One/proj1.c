@@ -12,9 +12,11 @@ determines which ones are valid.
 
 int main() {
     FILE *file = fopen("samplec.txt","r"); 
+    
+    //allocate memory for a buffer that reads information from the file into the buffer 
+    char buffer[15]; 
 
-    char buffer[2939]; 
-
+    //fgets is a method that reads each string of the buffer up until the newline 
     while (fgets(buffer, sizeof(buffer), file)) {
         printf("%s", buffer); 
     }
