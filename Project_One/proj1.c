@@ -65,13 +65,24 @@ int main() {
             //check that each IP address begins with a number from 1-9
 
             //move on to the next token 
+            pointer = strtok(NULL, "."); 
+            num_octets++; 
             
         }
+
+        if (is_valid && num_octets == 4) {
+            valid_counter++; 
+        }
+
+        else {
+            invalid_counter++; 
+        }
+
         printf("%s", buffer); 
-        valid_counter += valid_counter + 1; 
     }
 
     fclose(file); 
-
+    printf("Valid IP addresses: %d\n", valid_counter);
+    printf("Invalid IP addresses: %d\n", invalid_counter);
     return 0; 
 }
