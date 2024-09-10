@@ -21,7 +21,7 @@ int main() {
     }
     
     //allocate memory for a buffer that reads information from the file into the buffer 
-    char buffer[15]; 
+    char buffer[16]; 
 
     //counter for valid and invalid addresses 
     int valid_counter = 0; 
@@ -33,10 +33,17 @@ int main() {
         //tokenize the string based on the dots present 
         char *pointer = strtok(buffer, "."); 
 
+        //counter for number of octets
+        int num_octets = 0; 
+
+        //boolean for is valid 
+        int is_valid = 1; 
+
         while (pointer) {
             //check that there are no leading zeroes 
             if (pointer[0] == '\0' || (pointer[0] == '0' && pointer[1] == '\0')) {
-                invalid_counter += invalid_counter + 1; 
+                is_valid = 0; 
+                break; 
             }
             /*check to make sure that each address is made of four integer values
             more specifically: 
@@ -46,24 +53,18 @@ int main() {
             4. canNOT be more than 3 digits 
             */
             int octet = atoi(pointer); 
-
-            for (int i = 0; pointer[i] != '\0'; i++) {
-                if (isdigit(pointer[i])) {
-                    if (octet > 255 || octet <= 0) {
-                        invalid_counter += invalid_counter + 1; 
-                    }
-
-                    if (!isdigit(pointer[i])) {
-                        invalid_counter += invalid_counter + 1; 
-                    }
-                }
+                
+            if (octet > 255 || octet <= 0) {
+                is_valid = 0; 
+                break; 
             }
-
-
+                
 
             //check that there are four quads (make sure there are 3 periods present. this should be enough to pass this edge case)
 
             //check that each IP address begins with a number from 1-9
+
+            //move on to the next token 
             
         }
         printf("%s", buffer); 
