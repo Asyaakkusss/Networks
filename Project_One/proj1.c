@@ -13,77 +13,81 @@ determines which ones are valid.
 #include <ctype.h>
 
 int main() {
-    FILE *file = fopen("/home/asyaakkus/Networks/sample-C-input.txt","r"); 
+    FILE *file = fopen("/home/asyaakkus/Networks/sample-E-input.txt", "r"); 
 
-    //ensure throwing error if the file is not found 
+    // Ensure throwing error if the file is not found 
     if (file == NULL) {
-        printf("file is not available. Please try another file name"); 
+        printf("File is not available. Please try another file name\n");
+        return 1;  // Exit with an error code
     }
     
-    //allocate memory for a buffer that reads information from the file into the buffer 
-    char buffer[16]; 
+    // Allocate memory for a buffer that reads information from the file into the buffer 
+    char buffer[50]; 
 
-    //counter for valid and invalid addresses 
+    // Counters for valid and invalid addresses 
     int valid_counter = 0; 
     int invalid_counter = 0; 
 
-    //fgets is a method that reads each string of the buffer up until the newline 
+    // Read each line from the file
     while (fgets(buffer, sizeof(buffer), file)) {
 
-        //tokenize the string based on the dots present 
+        // Remove trailing newline character, if present
+        size_t len = strlen(buffer);
+        if (len > 0 && buffer[len - 1] == '\n') {
+            buffer[len - 1] = '\0';
+        }
+
+        // Tokenize the string based on the dots present 
         char *pointer = strtok(buffer, "."); 
 
-        //counter for number of octets
+        // Counter for number of octets
         int num_octets = 0; 
 
-        //boolean for is valid 
+        // Boolean for is valid 
         int is_valid = 1; 
 
         while (pointer) {
-            //check that there are no leading zeroes 
-            if (pointer[0] == '\0' || (pointer[0] == '0' && pointer[1] == '\0')) {
+            // Check for leading zeroes
+            if (pointer[0] == '\0' || (pointer[0] == '0' && pointer[1] != '\0')) {
                 is_valid = 0; 
                 break; 
             }
-            /*check to make sure that each address is made of four integer values
-            more specifically: 
-            1. can be any 1-digit number 0-9
-            2. can be any 2-digit number 10-99
-            3. can be any 3-digit number 100-255 
-            4. canNOT be more than 3 digits 
-            */
+
+            // Check if the octet contains only digits
+            for (size_t i = 0; i < strlen(pointer); i++) {
+                if (!isdigit((unsigned char)pointer[i])) {
+                    is_valid = 0; 
+                    break;
+                }
+            }
+            if (!is_valid) break;
+
+            // Convert the octet to an integer and validate its range
             int octet = atoi(pointer); 
-                
-            if (octet > 255 || octet <= 0) {
+            if (octet > 255 || octet < 0) {
                 is_valid = 0; 
                 break; 
             }
-                
 
-            //check that there are four quads (make sure there are 3 periods present. this should be enough to pass this edge case)
-
-            //check that each IP address begins with a number from 1-9
-
-            //move on to the next token 
+            // Move on to the next token 
             pointer = strtok(NULL, "."); 
             num_octets++; 
-            
         }
 
+        // Validate the IP address based on the number of octets
         if (is_valid && num_octets == 4) {
             valid_counter++; 
-        }
-
-        else {
+        } else {
             invalid_counter++; 
         }
-
     }
 
     fclose(file); 
+
     int num_lines = valid_counter + invalid_counter; 
     printf("LINES: %d\n", num_lines);
     printf("VALID: %d\n", valid_counter);
     printf("INVALID: %d\n", invalid_counter);
+
     return 0; 
 }
