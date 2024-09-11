@@ -12,6 +12,60 @@ determines which ones are valid.
 #include <string.h>
 #include <ctype.h>
 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define ARG_SUMMARY  0x1
+#define ARG_LIST     0x2
+#define ARG_MSG      0x4
+
+unsigned short cmd_line_flags = 0;
+char *msg = NULL;
+
+
+void usage (char *progname)
+{
+    fprintf (stderr,"%s [-s] [-l] [-f filename]\n", progname);
+    fprintf (stderr,"   -s    summary mode\n");
+    fprintf (stderr,"   -l    list mode\n");
+    fprintf (stderr,"   -f X  file name \'X\'\n");
+    exit (1);
+}
+
+
+void parseargs (int argc, char *argv [])
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hsm:")) != -1)
+    {
+        switch (opt)
+        {
+            case 's':
+              cmd_line_flags |= ARG_SUMMARY;
+              break;
+            case 'l':
+              cmd_line_flags |= ARG_MSG;
+              break;
+            case 'f':
+              cmd_line_flags |= ARG_LIST;
+              msg = optarg;
+              break;
+            case '?':
+            default:
+              usage (argv [0]);
+        }
+    }
+    if (cmd_line_flags == 0)
+    {
+        fprintf (stderr,"error: no command line option given\n");
+        usage (argv [0]);
+    }
+}
+
+
 int main() {
     FILE *file = fopen("/home/asyaakkus/Networks/sample-G-input.txt", "r"); 
 
