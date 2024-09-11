@@ -13,7 +13,7 @@ determines which ones are valid.
 #include <ctype.h>
 
 int main() {
-    FILE *file = fopen("/home/asyaakkus/Networks/sample-E-input.txt", "r"); 
+    FILE *file = fopen("/home/asyaakkus/Networks/sample-D-input.txt", "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
@@ -37,14 +37,25 @@ int main() {
             buffer[len - 1] = '\0';
         }
 
+        // Boolean for is valid 
+        int is_valid = 1; 
+
+        int dot_count = 0; 
+        //check to make sure there are only 3 periods in the buffer 
+        for (int i = 0; i < strlen(buffer); i++) {
+            if (buffer[i] == '.')
+                dot_count++; 
+        }
+
+        if (dot_count > 3) {
+            is_valid = 0; 
+            break; 
+        }
         // Tokenize the string based on the dots present 
         char *pointer = strtok(buffer, "."); 
 
         // Counter for number of octets
         int num_octets = 0; 
-
-        // Boolean for is valid 
-        int is_valid = 1; 
 
         while (pointer) {
             // Check for leading zeroes
