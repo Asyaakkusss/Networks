@@ -13,7 +13,7 @@ determines which ones are valid.
 #include <ctype.h>
 
 int main() {
-    FILE *file = fopen("samplec.txt","r"); 
+    FILE *file = fopen("/home/asyaakkus/Networks/sample-C-input.txt","r"); 
 
     //ensure throwing error if the file is not found 
     if (file == NULL) {
@@ -78,11 +78,12 @@ int main() {
             invalid_counter++; 
         }
 
-        printf("%s", buffer); 
     }
 
     fclose(file); 
-    printf("Valid IP addresses: %d\n", valid_counter);
-    printf("Invalid IP addresses: %d\n", invalid_counter);
+    int num_lines = valid_counter + invalid_counter; 
+    printf("LINES: %d\n", num_lines);
+    printf("VALID: %d\n", valid_counter);
+    printf("INVALID: %d\n", invalid_counter);
     return 0; 
 }
