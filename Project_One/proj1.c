@@ -40,7 +40,11 @@ int main() {
         // Boolean for is valid 
         int is_valid = 1; 
 
+        //counter for number of dots 
         int dot_count = 0; 
+
+        //we check how many periods there are before tokenizing it, so we can take it out of the running 
+        //if things don't add up. There should only be 3 periods in each IP address. 
         //check to make sure there are only 3 periods in the buffer 
         for (int i = 0; i < strlen(buffer); i++) {
             if (buffer[i] == '.')
@@ -49,8 +53,8 @@ int main() {
 
         if (dot_count > 3) {
             is_valid = 0; 
-            break; 
         }
+
         // Tokenize the string based on the dots present 
         char *pointer = strtok(buffer, "."); 
 
