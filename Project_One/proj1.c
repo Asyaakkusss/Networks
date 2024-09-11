@@ -13,7 +13,7 @@ determines which ones are valid.
 #include <ctype.h>
 
 int main() {
-    FILE *file = fopen("/home/asyaakkus/Networks/sample-D-input.txt", "r"); 
+    FILE *file = fopen("/home/asyaakkus/Networks/sample-G-input.txt", "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
