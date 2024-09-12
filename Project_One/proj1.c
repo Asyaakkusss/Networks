@@ -192,6 +192,12 @@ int main(int argc, char *argv[]) {
          
         memcpy(output_buffer, buffer, 50);
 
+        //remove newline 
+        size_t out_len = strlen(output_buffer); 
+        if (out_len > 0 && output_buffer[out_len - 1] == '\n') {
+            output_buffer[out_len - 1] = '\0'; 
+        }
+
         // Remove trailing newline character, if present
         size_t len = strlen(buffer);
         if (len > 0 && buffer[len - 1] == '\n') {
@@ -253,10 +259,10 @@ int main(int argc, char *argv[]) {
         // Validate the IP address based on the number of octets
         if (is_valid && num_octets == 4) {
             valid_counter++; 
-            printf("%s+\n", output_buffer); 
+            printf("%s + \n", output_buffer); 
         } else {
             invalid_counter++; 
-            printf("%s-\n", output_buffer); 
+            printf("%s - \n", output_buffer); 
         }
     }
 
