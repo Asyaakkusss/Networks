@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
 
-    if (cmd_line_flags == ARG_SUMMARY || ARG_FILE) {
+    if (cmd_line_flags == ARG_SUMMARY+ARG_FILE) {
 
         FILE *file = fopen(filename, "r"); 
 
@@ -165,11 +165,11 @@ int main(int argc, char *argv[]) {
 
     }
         
-    else if (cmd_line_flags == ARG_LIST)
+    if (cmd_line_flags == ARG_LIST+ARG_FILE)
         fprintf (stdout,"hello world\n");
     //else if (cmd_line_flags == ARG_FILE)
         //fprintf (stdout,"%s\n", filename);
-    else
+    if ((cmd_line_flags == 0))
     {
         fprintf (stderr,"error: only one option at a time allowed\n");
         exit (1);
