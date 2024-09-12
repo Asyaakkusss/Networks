@@ -19,10 +19,10 @@ determines which ones are valid.
 
 #define ARG_SUMMARY  0x1
 #define ARG_LIST     0x2
-#define ARG_MSG      0x4
+#define ARG_FILE     0x4
 
 unsigned short cmd_line_flags = 0;
-char *msg = NULL;
+char *filename = NULL;
 
 
 void usage (char *progname)
@@ -30,7 +30,7 @@ void usage (char *progname)
     fprintf (stderr,"%s [-s] [-l] [-f filename]\n", progname);
     fprintf (stderr,"   -s    summary mode\n");
     fprintf (stderr,"   -l    list mode\n");
-    fprintf (stderr,"   -f X  file name \'X\'\n");
+    fprintf (stderr,"   -f X  file name 'X'\n");
     exit (1);
 }
 
@@ -39,7 +39,7 @@ void parseargs (int argc, char *argv [])
 {
     int opt;
 
-    while ((opt = getopt (argc, argv, "hsm:")) != -1)
+    while ((opt = getopt (argc, argv, "slf:")) != -1)
     {
         switch (opt)
         {
@@ -47,27 +47,32 @@ void parseargs (int argc, char *argv [])
               cmd_line_flags |= ARG_SUMMARY;
               break;
             case 'l':
-              cmd_line_flags |= ARG_MSG;
+              cmd_line_flags |= ARG_LIST;
               break;
             case 'f':
-              cmd_line_flags |= ARG_LIST;
-              msg = optarg;
+              cmd_line_flags |= ARG_FILE;
+              filename = optarg;
               break;
             case '?':
             default:
               usage (argv [0]);
         }
     }
-    if (cmd_line_flags == 0)
-    {
+
+    if ((cmd_line_flags & (ARG_SUMMARY | ARG_LIST)) == 0 || (cmd_line_flags & ARG_FILE) == 0)    {
         fprintf (stderr,"error: no command line option given\n");
         usage (argv [0]);
     }
 }
 
 
-int main() {
-    FILE *file = fopen("/home/asyaakkus/Networks/sample-G-input.txt", "r"); 
+int main(int argc, char *argv[]) {
+
+    parseargs(argc,argv);
+
+    if (cmd_line_flags == ARG_SUMMARY) {
+
+        FILE *file = fopen(filename, "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
@@ -158,5 +163,18 @@ int main() {
     printf("VALID: %d\n", valid_counter);
     printf("INVALID: %d\n", invalid_counter);
 
-    return 0; 
+    }
+        
+    else if (cmd_line_flags == ARG_LIST)
+        fprintf (stdout,"hello world\n");
+    else if (cmd_line_flags == ARG_FILE)
+        fprintf (stdout,"%s\n", filename);
+    else
+    {
+        fprintf (stderr,"error: only one option at a time allowed\n");
+        exit (1);
+    }
+        return 0; 
+
+    
 }
