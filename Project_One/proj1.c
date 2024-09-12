@@ -167,8 +167,7 @@ int main(int argc, char *argv[]) {
         
     if (cmd_line_flags == ARG_LIST+ARG_FILE)
         fprintf (stdout,"hello world\n");
-    //else if (cmd_line_flags == ARG_FILE)
-        //fprintf (stdout,"%s\n", filename);
+    
     if ((cmd_line_flags == 0))
     {
         fprintf (stderr,"error: only one option at a time allowed\n");
