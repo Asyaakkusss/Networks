@@ -178,6 +178,9 @@ int main(int argc, char *argv[]) {
     // Allocate memory for a buffer that reads information from the file into the buffer 
     char buffer[50]; 
 
+    //Allocate memory to another buffer that stores the value to be spit out in list mode 
+    char output_buffer[50]; 
+
     // Counters for valid and invalid addresses 
     int valid_counter = 0; 
     int invalid_counter = 0; 
@@ -185,6 +188,8 @@ int main(int argc, char *argv[]) {
     // Read each line from the file
     while (fgets(buffer, sizeof(buffer), file)) {
         //create a new buffer that will be used to 
+        fgets(output_buffer, sizeof(buffer), file); 
+        
         // Remove trailing newline character, if present
         size_t len = strlen(buffer);
         if (len > 0 && buffer[len - 1] == '\n') {
@@ -246,11 +251,11 @@ int main(int argc, char *argv[]) {
         // Validate the IP address based on the number of octets
         if (is_valid && num_octets == 4) {
             valid_counter++; 
-            printf("%s", buffer); 
+            printf("%s", output_buffer); 
             printf("+\n"); 
         } else {
             invalid_counter++; 
-            printf("%s", buffer); 
+            printf("%s", output_buffer); 
             printf("-\n"); 
         }
     }
