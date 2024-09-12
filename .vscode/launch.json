@@ -6,7 +6,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
-      "args": ["-s", "-f", "/home/asyaakkus/Networks/sample-A-input.txt"],
+      "args": ["-l", "-f", "/home/asyaakkus/Networks/sample-D-input.txt"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/asyaakkus/Networks/Project_One",

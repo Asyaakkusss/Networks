@@ -188,8 +188,10 @@ int main(int argc, char *argv[]) {
     // Read each line from the file
     while (fgets(buffer, sizeof(buffer), file)) {
         //create a new buffer that will be used to 
-        fgets(output_buffer, sizeof(buffer), file); 
-        
+        //fgets(output_buffer, sizeof(buffer), file); 
+         
+        memcpy(output_buffer, buffer, 50);
+
         // Remove trailing newline character, if present
         size_t len = strlen(buffer);
         if (len > 0 && buffer[len - 1] == '\n') {
@@ -251,12 +253,10 @@ int main(int argc, char *argv[]) {
         // Validate the IP address based on the number of octets
         if (is_valid && num_octets == 4) {
             valid_counter++; 
-            printf("%s", output_buffer); 
-            printf("+\n"); 
+            printf("%s+\n", output_buffer); 
         } else {
             invalid_counter++; 
-            printf("%s", output_buffer); 
-            printf("-\n"); 
+            printf("%s-\n", output_buffer); 
         }
     }
 
