@@ -267,11 +267,6 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(file); 
-
-    int num_lines = valid_counter + invalid_counter; 
-    printf("LINES: %d\n", num_lines);
-    printf("VALID: %d\n", valid_counter);
-    printf("INVALID: %d\n", invalid_counter);
     }
         
     
