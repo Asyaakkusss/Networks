@@ -67,19 +67,12 @@ void parseargs (int argc, char *argv [])
     }
 }
 
-
-int main(int argc, char *argv[]) {
-
-    parseargs(argc,argv);
-
-    if (cmd_line_flags == ARG_SUMMARY+ARG_FILE) {
-
-        FILE *file = fopen(filename, "r"); 
+void summary_mode() {
+       FILE* file = fopen(filename, "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
         printf("File is not available. Please try another file name\n");
-        return 1;  // Exit with an error code
     }
     
     // Allocate memory for a buffer that reads information from the file into the buffer 
@@ -165,16 +158,15 @@ int main(int argc, char *argv[]) {
     printf("VALID: %d\n", valid_counter);
     printf("INVALID: %d\n", invalid_counter);
 
-    }
-        
-    if (cmd_line_flags == ARG_LIST+ARG_FILE) {
+}
+
+void list_mode() {
 
             FILE *file = fopen(filename, "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
         printf("File is not available. Please try another file name\n");
-        return 1;  // Exit with an error code
     }
     
     // Allocate memory for a buffer that reads information from the file into the buffer 
@@ -269,6 +261,19 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(file); 
+}
+
+int main(int argc, char *argv[]) {
+
+    parseargs(argc,argv);
+
+    //if the command lines indicate to run in summary mode, run summary_mode() method 
+    if (cmd_line_flags == ARG_SUMMARY+ARG_FILE) {
+        summary_mode(); 
+    }
+        
+    if (cmd_line_flags == ARG_LIST+ARG_FILE) {
+        list_mode(); 
     }
         
     if (cmd_line_flags == ARG_LIST+ARG_SUMMARY+ARG_FILE) {
