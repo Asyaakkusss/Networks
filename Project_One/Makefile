@@ -1,3 +1,9 @@
+#Name: Asya Akkus 
+#Case Network ID: aya29
+#File Name: Makefile 
+#Date Created: 9/4/2024
+#Description: This is the makefile for proj1 
+
 CC=gcc
 CXX=g++
 LD=gcc

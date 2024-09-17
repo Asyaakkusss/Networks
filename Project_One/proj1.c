@@ -1,10 +1,12 @@
 /*
 Name: Asya Akkus 
 Case Network ID: aya29
-File Name: proj1
+File Name: proj1.c
 Date Created: 9/4/2024
 Description: file parses long lists of IP addresses and 
-determines which ones are valid. 
+determines which ones are valid. It returns them in list
+or summary mode, depending on what the user chooses in 
+the command line. 
 */
 
 #include <stdio.h>
@@ -269,13 +271,22 @@ int main(int argc, char *argv[]) {
     fclose(file); 
     }
         
-    
+    if (cmd_line_flags == ARG_LIST+ARG_SUMMARY+ARG_FILE) {
+        fprintf(stderr, "error: summary and list mode cannot be given together\n"); 
+        exit (1); 
+    }
+
     if ((cmd_line_flags == 0))
     {
         fprintf (stderr,"error: only one option at a time allowed\n");
         exit (1);
     }
-        return 0; 
 
+    if ((cmd_line_flags != ARG_LIST+ARG_FILE)) {
+        fprintf(stderr, "error: Unknown command line option detected");
+        exit (1); 
+    }
+
+        return 0; 
     
 }
