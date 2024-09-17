@@ -8,27 +8,18 @@ CC=gcc
 CXX=g++
 LD=gcc
 CFLAGS=-Wall -Werror -g
-LDFLAGS=$(CFLAGS)
+LDFLAGS=
 
-TARGETS=parser
+TARGETS=proj1
 
 all: $(TARGETS)
 
 # Define the proj1 target
 proj1: proj1.c
-	gcc -o proj1 proj1.c0
 	$(CC) $(CFLAGS) -o $@ $<
 
-# Pattern rule for building .o files from .c files
-%.o: %.c
-	$(CC) $(CFLAGS) -c $<
-
-# Pattern rule for building .o files from .cc files
-%.o: %.cc
-	$(CXX) $(CFLAGS) -c $<
-
 clean:
-	rm -f *.o
+	rm -f *.o $(TARGETS)
 
 distclean: clean
 	rm -f $(TARGETS)
