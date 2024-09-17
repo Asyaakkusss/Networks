@@ -68,7 +68,7 @@ void parseargs (int argc, char *argv [])
 }
 
 void summary_mode() {
-       FILE* file = fopen(filename, "r"); 
+    FILE* file = fopen(filename, "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
@@ -162,7 +162,7 @@ void summary_mode() {
 
 void list_mode() {
 
-            FILE *file = fopen(filename, "r"); 
+    FILE *file = fopen(filename, "r"); 
 
     // Ensure throwing error if the file is not found 
     if (file == NULL) {
@@ -293,5 +293,5 @@ int main(int argc, char *argv[]) {
     }
 
         return 0; 
-    
+        
 }
