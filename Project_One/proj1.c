@@ -281,17 +281,6 @@ int main(int argc, char *argv[]) {
         exit (1); 
     }
 
-    if ((cmd_line_flags == 0))
-    {
-        fprintf (stderr,"error: only one option at a time allowed\n");
-        exit (1);
-    }
-
-    if ((cmd_line_flags != ARG_LIST+ARG_FILE)) {
-        fprintf(stderr, "error: Unknown command line option detected");
-        exit (1); 
-    }
-
         return 0; 
-        
+
 }
