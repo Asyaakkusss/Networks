@@ -16,7 +16,7 @@ all: $(TARGETS)
 
 # Define the proj1 target
 proj1: proj1.c
-	gcc -o proj1 proj1.c
+	gcc -o proj1 proj1.c0
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Pattern rule for building .o files from .c files
