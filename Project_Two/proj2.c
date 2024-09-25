@@ -178,7 +178,10 @@ void i_option() {
 int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
-    i_option(); 
+
+    if (cmd_line_flags == ARG_I+ARG_U+ARG_W) {
+      i_option(); 
+    }
 
     return 0; 
 
