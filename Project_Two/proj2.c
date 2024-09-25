@@ -108,7 +108,7 @@ void parseargs (int argc, char *argv [])
         }
     }
 
-    if ((cmd_line_flags & (ARG_I | ARG_Q | ARG_A | ARG_R)) == 0 || (cmd_line_flags & ARG_U) == 0 || (cmd_line_flags & ARG_W) == 0)    {
+    if ((cmd_line_flags & (ARG_I | ARG_Q | ARG_A)) == 0 || (cmd_line_flags & ARG_U) == 0 || (cmd_line_flags & ARG_W) == 0)    {
         fprintf (stderr,"error: no command line option given\n");
         usage (argv [0]);
     }
