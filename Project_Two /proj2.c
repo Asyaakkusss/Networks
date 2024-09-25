@@ -49,9 +49,12 @@ INFO: output_file: /tmp/mallman.html
 #include <stdlib.h>
 #include <unistd.h>
 
-#define ARG_SUMMARY  0x1
-#define ARG_LIST     0x2
-#define ARG_FILE     0x4
+#define ARG_I  0x1  //1
+#define ARG_Q  0x2  //2
+#define ARG_A  0x4  //4
+#define ARG_U  0x8  //8
+#define ARG_W  0x10 //16
+#define ARG_R  0x20 //32
 
 unsigned short cmd_line_flags = 0;
 char *filename = NULL;
@@ -62,11 +65,11 @@ void usage (char *progname)
 {
     fprintf (stderr,"%s [-i] [-q] [-a] -u URL -w filename [-r]\n", progname);
     fprintf (stderr, "   -i    Debugging Information\n"); 
-    fprintf (stderr, "   -q    HTTP Request"); 
-    fprintf (stderr, "   -a    HTTP Response Header"); 
-    fprintf (stderr, "   -u    URL\n"); 
-    fprintf (stderr, "   -w    filename"); 
-    fprintf (stderr, "   -r    Redirections from Web Server");
+    fprintf (stderr, "   -q    HTTP Request\n"); 
+    fprintf (stderr, "   -a    HTTP Response Header\n"); 
+    fprintf (stderr, "   -u U  URL 'U'\n"); 
+    fprintf (stderr, "   -w X  filename 'X\n"); 
+    fprintf (stderr, "   -r    Redirections from Web Server\n");
     exit (1);
 }
 
@@ -75,27 +78,37 @@ void parseargs (int argc, char *argv [])
 {
     int opt;
 
-    while ((opt = getopt (argc, argv, "slf:")) != -1)
+    while ((opt = getopt (argc, argv, "iqau:w:r")) != -1)
     {
         switch (opt)
         {
-            case 's':
-              cmd_line_flags |= ARG_SUMMARY;
+            case 'i':
+              cmd_line_flags |= ARG_I;
               break;
-            case 'l':
-              cmd_line_flags |= ARG_LIST;
+            case 'q':
+              cmd_line_flags |= ARG_Q;
               break;
-            case 'f':
-              cmd_line_flags |= ARG_FILE;
-              filename = optarg;
+            case 'a':
+              cmd_line_flags |= ARG_A;
               break;
+            case 'u': 
+              cmd_line_flags |= ARG_U; 
+              url = optarg; 
+              break; 
+            case 'w': 
+              cmd_line_flags |= ARG_W; 
+              filename = optarg; 
+              break; 
+            case 'r': 
+              cmd_line_flags |= ARG_R; 
+              break; 
             case '?':
             default:
               usage (argv [0]);
         }
     }
 
-    if ((cmd_line_flags & (ARG_SUMMARY | ARG_LIST)) == 0 || (cmd_line_flags & ARG_FILE) == 0)    {
+    if ((cmd_line_flags & (ARG_I | ARG_Q | ARG_A | ARG_R)) == 0 || (cmd_line_flags & ARG_U) == 0 || (cmd_line_flags & ARG_W) == 0)    {
         fprintf (stderr,"error: no command line option given\n");
         usage (argv [0]);
     }
