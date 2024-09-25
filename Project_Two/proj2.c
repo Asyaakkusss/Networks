@@ -57,7 +57,8 @@ INFO: output_file: /tmp/mallman.html
 #define ARG_R  0x20 //32
 
 unsigned short cmd_line_flags = 0;
-char *filename = NULL;
+char *url = NULL;
+char *filename = NULL; 
 
 //./proj2 [-i] [-q] [-a] -u URL -w filename
 
@@ -112,4 +113,13 @@ void parseargs (int argc, char *argv [])
         fprintf (stderr,"error: no command line option given\n");
         usage (argv [0]);
     }
+}
+
+
+int main(int argc, char *argv[]) {
+
+    parseargs(argc,argv);
+
+        return 0; 
+
 }
