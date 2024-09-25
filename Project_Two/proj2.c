@@ -147,8 +147,21 @@ void i_option() {
   const char* start = strstr(url, "://") + 3; //pseudo-start of the host (we have to add 3 to this)
 
   const char* end = strchr(start, '/'); 
-  strncpy(host, start, end - start); 
+
+  if (end != NULL) {
+    strncpy(host, start, end - start); 
+    host[end-start] = '\0'; 
+  }
+  else {
+    strcpy(host, start); 
+  }
+  if (end != NULL) {
   strcpy(web_file, end); 
+  }
+  else {
+    web_file[0] = '/'; 
+    web_file[1] = '\0'; 
+  }
 
   printf("INFO: host: %s\n", host); 
   printf("INFO: web_file: %s\n", web_file); 
