@@ -62,27 +62,39 @@ char *filename = NULL;
 
 //./proj2 [-i] [-q] [-a] -u URL -w filename
 
-void usage (char *progname)
-{
+void usage (char *progname) {
     fprintf (stderr,"%s [-i] [-q] [-a] -u URL -w filename [-r]\n", progname);
     fprintf (stderr, "   -i    Debugging Information\n"); 
     fprintf (stderr, "   -q    HTTP Request\n"); 
     fprintf (stderr, "   -a    HTTP Response Header\n"); 
     fprintf (stderr, "   -u U  URL 'U'\n"); 
-    fprintf (stderr, "   -w X  filename 'X\n"); 
+    fprintf (stderr, "   -w X  filename 'X'\n"); 
     fprintf (stderr, "   -r    Redirections from Web Server\n");
     exit (1);
 }
 
+void validateargs (int argc, char *argv []) {
 
-void parseargs (int argc, char *argv [])
-{
+  
+    // The filename must be present
+    if ((cmd_line_flags & ARG_W) == 0 || filename == NULL) {
+        fprintf(stderr, "error: -w option must be given with a filename\n");
+        usage(argv[0]);
+    }
+
+    // The URL must be present
+    if ((cmd_line_flags & ARG_U) == 0 || url == NULL) {
+        fprintf(stderr, "error: -u option must be given with a URL\n"); 
+        usage(argv[0]);
+    }
+
+}
+
+void parseargs (int argc, char *argv []) {
     int opt;
 
-    while ((opt = getopt (argc, argv, "iqau:w:r")) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt (argc, argv, "iqau:w:r")) != -1) {
+        switch (opt) {
             case 'i':
               cmd_line_flags |= ARG_I;
               break;
@@ -104,22 +116,50 @@ void parseargs (int argc, char *argv [])
               cmd_line_flags |= ARG_R; 
               break; 
             case '?':
+              if (optopt == 'u') {
+                    fprintf(stderr, "error: -u option requires a URL\n");
+                } else if (optopt == 'w') {
+                    fprintf(stderr, "error: -w option requires a filename\n");
+                } else {
+                    fprintf(stderr, "error: unknown option -%c\n", optopt);
+                }
+                usage(argv[0]);
+                return; // Exit after handling error
             default:
-              usage (argv [0]);
+                usage(argv[0]);
+                return; // Exit after handling error
         }
     }
 
-    if ((cmd_line_flags & (ARG_I | ARG_Q | ARG_A)) == 0 || (cmd_line_flags & ARG_U) == 0 || (cmd_line_flags & ARG_W) == 0)    {
-        fprintf (stderr,"error: no command line option given\n");
-        usage (argv [0]);
-    }
+    validateargs(argc, argv); 
 }
 
+void i_option() {
+  //grab the command line
+  //print out INFO: host: the thing after http 
+  //print out INFO: web_file: print out / if no slash found, print out rest of string if it exsits 
+  //print out INFO: output_file: print out whatever is after -w 
+  char host[strlen(url)]; 
+  char web_file[strlen(url)]; 
+
+
+  //find the :// portion and fast forward 3 places 
+  const char* start = strstr(url, "://") + 3; //pseudo-start of the host (we have to add 3 to this)
+
+  const char* end = strchr(start, '/'); 
+  strncpy(host, start, end - start); 
+  strcpy(web_file, end); 
+
+  printf("INFO: host: %s\n", host); 
+  printf("INFO: web_file: %s\n", web_file); 
+  printf("INFO: output_file: %s\n", filename); 
+}
 
 int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
+    i_option(); 
 
-        return 0; 
+    return 0; 
 
 }
