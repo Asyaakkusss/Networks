@@ -146,7 +146,7 @@ void parseargs (int argc, char *argv []) {
 
 /*for the global variables of host name and url filename*/
 //us this in i option too in order to prevent points off on repeating code 
-char find_host(char *url) {
+void find_host(char *url) {
   const char* start = strstr(url, "://") + 3; 
 
   const char* end = strchr(start, '/'); 
@@ -163,9 +163,9 @@ char find_host(char *url) {
 }
 
 //use this in i option to prevent points off on repeating code 
-char find_url_filename(char *url) {
+void find_url_filename(char *url) {
   const char* start = strstr(url, "://") + 3; 
-  
+
   const char* end = strchr(start, '/'); 
 
   if (end != NULL) {
@@ -253,12 +253,16 @@ void i_option() {
 
 void q_option() {
 
-//save to a struct 
+/*
+REQ: GET [url_filename] HTTP/1.0
+REQ: Host: [hostname]
+REQ: User-Agent: Case CSDS 325/425 WebClient 0.1
+*/
 
-printf("REQ: GET %s", URL_FILENAME, "HTTP/1.0\r\n %s"); 
-printf("REQ: Host: %s", HOST_NAME, "\r\n %s"); 
-printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1\r\n %s"); 
-printf("\r\n %s"); 
+printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
+printf("REQ: Host: %s \r\n", HOST_NAME); 
+printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
+printf("\r\n"); 
 }
 
 int main(int argc, char *argv[]) {
