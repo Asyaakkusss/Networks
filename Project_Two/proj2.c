@@ -61,9 +61,14 @@ INFO: output_file: /tmp/mallman.html
 #define ARG_W  0x10 //16
 #define ARG_R  0x20 //32
 
+#define MAX_LENGTH 256
+
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
 char *filename = NULL; 
+
+char HOST_NAME[MAX_LENGTH]; //create global variable for the host name 
+char URL_FILENAME[MAX_LENGTH]; 
 
 //./proj2 [-i] [-q] [-a] -u URL -w filename
 
@@ -139,6 +144,43 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
+/*for the global variables of host name and url filename*/
+//us this in i option too in order to prevent points off on repeating code 
+char find_host(char *url) {
+  const char* start = strstr(url, "://") + 3; 
+
+  const char* end = strchr(start, '/'); 
+
+  if (end != NULL) {
+    strncpy(HOST_NAME, start, end-start); 
+    HOST_NAME[end - start] = '\0'; 
+  }
+
+  else {
+    strcpy(HOST_NAME, start); 
+  }
+
+}
+
+//use this in i option to prevent points off on repeating code 
+char find_url_filename(char *url) {
+  const char* start = strstr(url, "://") + 3; 
+  
+  const char* end = strchr(start, '/'); 
+
+  if (end != NULL) {
+  strcpy(URL_FILENAME, end); 
+  }
+
+  //if there is no web file, return a / and then null terminate the string so no extra garbage is printed 
+  else {
+    URL_FILENAME[0] = '/'; 
+    URL_FILENAME[1] = '\0'; 
+  }
+
+}
+
+/*comment this out for now to focus on the q option 
 void a_option() {
     struct sockaddr_in sock_addr_info; 
     struct hostent *hinfo;
@@ -146,10 +188,10 @@ void a_option() {
     char buffer [BUFLEN];
     int sd, ret;
 
-    /* lookup the hostname */
+    //lookup the hostname
     hinfo = gethostbyname (find_host());
 
-    /* set endpoint information */
+    //set endpoint information 
     memset ((char *)&sock_addr_info, 0x0, sizeof (sock_addr_info)); //set aside memory for socket address structure 
     sock_addr_info.sin_family = AF_INET; //address family is internet 
     sock_addr_info.sin_port = htons (atoi (argv [PORT_POS])); //set port number in network byte order 
@@ -157,47 +199,24 @@ void a_option() {
 
     sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto); //create a socket 
     
-    /* connect the socket */
+    //connect the socket
     connect (sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info));
 
-    /* snarf whatever server provides and print it */
+    //snarf whatever server provides and print it
     memset (buffer,0x0,BUFLEN);
     ret = read (sd,buffer,BUFLEN - 1);
     if (ret < 0)
         errexit ("reading error",NULL);
     fprintf (stdout,"%s\n",buffer);
             
-    /* close & exit */
+    //close & exit
     close (sd);
 }
+*/
 
-//us this in i option too in order to prevent points off on repeating code 
-str find_host() {
-  char host[strlen(url)]; 
-
-  const char* start = strstr(url, "://") + 3; 
-
-  const char* end = strchr(start, '/'); 
-
-  if (end != NULL) {
-    strncpy(host, start, end-start); 
-    host[end - start] = '\0'; 
-  }
-
-  else {
-    strcpy(host, start); 
-  }
-
-  return host; 
-}
 void i_option() {
-  //grab the command line
-  //print out INFO: host: the thing after http 
-  //print out INFO: web_file: print out / if no slash found, print out rest of string if it exsits 
-  //print out INFO: output_file: print out whatever is after -w 
   char host[strlen(url)]; 
   char web_file[strlen(url)]; 
-
 
   //find the :// portion and fast forward 3 places 
   const char* start = strstr(url, "://") + 3; //pseudo-start of the host (we have to add 3 to this)
@@ -229,6 +248,17 @@ void i_option() {
   printf("INFO: host: %s\n", host); 
   printf("INFO: web_file: %s\n", web_file); 
   printf("INFO: output_file: %s\n", filename); 
+}
+
+
+void q_option() {
+
+//save to a struct 
+
+printf("REQ: GET %s", URL_FILENAME, "HTTP/1.0\r\n %s"); 
+printf("REQ: Host: %s", HOST_NAME, "\r\n %s"); 
+printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1\r\n %s"); 
+printf("\r\n %s"); 
 }
 
 int main(int argc, char *argv[]) {
