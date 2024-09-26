@@ -269,8 +269,14 @@ int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
 
+    find_host(url); 
+    find_url_filename(url); 
     if (cmd_line_flags == ARG_I+ARG_U+ARG_W) {
       i_option(); 
+    }
+
+    if (cmd_line_flags == ARG_Q+ARG_U+ARG_W) {
+      q_option(); 
     }
 
     return 0; 
