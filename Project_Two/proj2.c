@@ -65,10 +65,10 @@ INFO: output_file: /tmp/mallman.html
 
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
-char *filename = NULL; 
+char *filename = NULL; //file name for the -w portion 
 
 char HOST_NAME[MAX_LENGTH]; //create global variable for the host name 
-char URL_FILENAME[MAX_LENGTH]; 
+char URL_FILENAME[MAX_LENGTH]; //file name from the url 
 
 //./proj2 [-i] [-q] [-a] -u URL -w filename
 
@@ -215,38 +215,9 @@ void a_option() {
 */
 
 void i_option() {
-  char host[strlen(url)]; 
-  char web_file[strlen(url)]; 
-
-  //find the :// portion and fast forward 3 places 
-  const char* start = strstr(url, "://") + 3; //pseudo-start of the host (we have to add 3 to this)
-
-  //start a new leaf...find the first / in order to parse the web file portion 
-  const char* end = strchr(start, '/'); 
-
-  //strncpy end - start amount of characters from the string beginning from the start pointer 
-  if (end != NULL) {
-    strncpy(host, start, end - start); 
-    host[end-start] = '\0'; 
-  }
-  //strcpy the entire string from the start character to the end if there is no web file 
-  else {
-    strcpy(host, start); 
-  }
-
-  //for the web file, strcpy the entire string from start to end beginning from the end pointer 
-  if (end != NULL) {
-  strcpy(web_file, end); 
-  }
-
-  //if there is no web file, return a / and then null terminate the string so no extra garbage is printed 
-  else {
-    web_file[0] = '/'; 
-    web_file[1] = '\0'; 
-  }
-
-  printf("INFO: host: %s\n", host); 
-  printf("INFO: web_file: %s\n", web_file); 
+  
+  printf("INFO: host: %s\n", HOST_NAME); 
+  printf("INFO: web_file: %s\n", URL_FILENAME); 
   printf("INFO: output_file: %s\n", filename); 
 }
 
