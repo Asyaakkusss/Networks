@@ -49,6 +49,11 @@ INFO: output_file: /tmp/mallman.html
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+
 #define ARG_I  0x1  //1
 #define ARG_Q  0x2  //2
 #define ARG_A  0x4  //4
@@ -134,6 +139,57 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
+void a_option() {
+    struct sockaddr_in sock_addr_info; 
+    struct hostent *hinfo;
+    struct protoent *protoinfo;
+    char buffer [BUFLEN];
+    int sd, ret;
+
+    /* lookup the hostname */
+    hinfo = gethostbyname (find_host());
+
+    /* set endpoint information */
+    memset ((char *)&sock_addr_info, 0x0, sizeof (sock_addr_info)); //set aside memory for socket address structure 
+    sock_addr_info.sin_family = AF_INET; //address family is internet 
+    sock_addr_info.sin_port = htons (atoi (argv [PORT_POS])); //set port number in network byte order 
+    memcpy ((char *)&sock_addr_info.sin_addr,hinfo->h_addr,hinfo->h_length); //copy ip address from the host info to the sock addr info struct 
+
+    sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto); //create a socket 
+    
+    /* connect the socket */
+    connect (sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info));
+
+    /* snarf whatever server provides and print it */
+    memset (buffer,0x0,BUFLEN);
+    ret = read (sd,buffer,BUFLEN - 1);
+    if (ret < 0)
+        errexit ("reading error",NULL);
+    fprintf (stdout,"%s\n",buffer);
+            
+    /* close & exit */
+    close (sd);
+}
+
+//us this in i option too in order to prevent points off on repeating code 
+str find_host() {
+  char host[strlen(url)]; 
+
+  const char* start = strstr(url, "://") + 3; 
+
+  const char* end = strchr(start, '/'); 
+
+  if (end != NULL) {
+    strncpy(host, start, end-start); 
+    host[end - start] = '\0'; 
+  }
+
+  else {
+    strcpy(host, start); 
+  }
+
+  return host; 
+}
 void i_option() {
   //grab the command line
   //print out INFO: host: the thing after http 

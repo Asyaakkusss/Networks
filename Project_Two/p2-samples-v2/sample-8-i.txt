@@ -1,0 +1,3 @@
+INFO: host: www.icir.org
+INFO: web_file: /mallman/test-files/test.html
+INFO: output_file: /dev/null

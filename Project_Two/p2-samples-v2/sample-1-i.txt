@@ -1,0 +1,3 @@
+INFO: host: www.icir.org
+INFO: web_file: /
+INFO: output_file: icir.html

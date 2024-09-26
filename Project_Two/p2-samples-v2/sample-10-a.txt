@@ -1,0 +1,7 @@
+RSP: HTTP/1.1 200 OK
+RSP: Date: Tue, 24 Sep 2024 12:19:40 GMT
+RSP: Server: Apache
+RSP: Accept-Ranges: bytes
+RSP: Content-Length: 6569
+RSP: Connection: close
+RSP: Content-Type: text/html; charset=UTF-8
