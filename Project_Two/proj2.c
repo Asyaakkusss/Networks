@@ -194,7 +194,7 @@ void a_option() {
         exit(1);
     }
 
-    /* connect the socket */
+    //connect the socket 
     if (connect(sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info)) < 0) {
         fprintf (stderr, "cannot connect");
         exit(1); 
