@@ -155,10 +155,6 @@ void find_url_filename(char *url) {
 //options share some functionality in common? 
 
 void create_get_header() {
-  printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
-  printf("REQ: Host: %s \r\n", HOST_NAME); 
-  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
-  printf("\r\n"); 
 
   /*
   GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
@@ -209,6 +205,14 @@ void a_option() {
     //read response 
     memset(response_header_buffer, 0, A_BUFFER_LEN);  
     read(sd, response_header_buffer, A_BUFFER_LEN - 1); 
+
+
+    //we need to truncate, so we make a pointer to the end of the header and terminate the string there 
+    char *header_end = strstr(response_header_buffer, "\r\n\r\n"); 
+    if (header_end != NULL) {
+
+    *header_end = '\0'; 
+    }
     //print response header 
     fprintf(stdout, "%s\n", response_header_buffer); 
     
@@ -227,7 +231,10 @@ void i_option() {
 
 void q_option() {
 
-  create_get_header(); 
+  printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
+  printf("REQ: Host: %s \r\n", HOST_NAME); 
+  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
+  printf("\r\n"); 
 }
 
 int main(int argc, char *argv[]) {
