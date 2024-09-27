@@ -151,17 +151,39 @@ void find_url_filename(char *url) {
 
 }
 
+//QUESTION: is it ok to create a method that runs the q option stuff and then call that method inside i_option to avoid repeating code because if we call the q option that means we can't call the a option and the q and a 
+//options share some functionality in common? 
+
+void create_get_header() {
+  printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
+  printf("REQ: Host: %s \r\n", HOST_NAME); 
+  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
+  printf("\r\n"); 
+
+  /*
+  GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
+  */
+
+  snprintf(GET_REQUEST, A_BUFFER_LEN, "GET %s HTTP/1.0\r\n" "Host: %s \r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n" "\r\n", URL_FILENAME, HOST_NAME); 
+}
+
 void a_option() {
 
-    if (HOST_NAME[0] == '\0') {
-      fprintf(stderr, "cannot find name: %s", HOST_NAME); 
+    //create http get request (stored as a global variable called GET_REQUEST. )
+    create_get_header(); 
+
+    char response_header_buffer[A_BUFFER_LEN]; 
+
+    hinfo = gethostbyname(HOST_NAME); 
+    if (hinfo == NULL) {
+      fprintf(stderr, "cannot find host name %s\n", HOST_NAME); 
       exit(1); 
     }
 
     //set endpoint information
     memset ((char *)&sock_addr_info, 0x0, sizeof (sock_addr_info)); //casting address of sock_addr_info to a char, sets all bytes in block to 0, specifies how many bytes of memory should be set to 0 
     sock_addr_info.sin_family = AF_INET; //family of sockets set to af_inet 
-    sock_addr_info.sin_port = PORT_POS; //socket port position given 
+    sock_addr_info.sin_port = htons(PORT_POS); //socket port position given and converted to network byte order 
     memcpy ((char *)&sock_addr_info.sin_addr,hinfo->h_addr,hinfo->h_length); //destination (sock_addr_info_addr value of sock_addr_info struct), source from hostent, and number of bytes to copy 
 
     if ((protoinfo = getprotobyname(PROTOCOL)) == NULL) {
@@ -177,42 +199,22 @@ void a_option() {
     }
 
     /* connect the socket */
-    if (connect (sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info)) < 0) {
+    if (connect(sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info)) < 0) {
         fprintf (stderr, "cannot connect");
         exit(1); 
     }
 
-    //create http get request (stored as a global variable called GET_REQUEST. )
-
-
     //send request 
-
+    send(sd, GET_REQUEST, strlen(GET_REQUEST), 0);
     //read response 
-
+    memset(response_header_buffer, 0, A_BUFFER_LEN);  
+    read(sd, response_header_buffer, A_BUFFER_LEN - 1); 
     //print response header 
-
-
-
+    fprintf(stdout, "%s\n", response_header_buffer); 
     
     /* close & exit */
     close (sd);
     exit (0);
-}
-
-//QUESTION: is it ok to create a method that runs the q option stuff and then call that method inside i_option to avoid repeating code because if we call the q option that means we can't call the a option and the q and a 
-//options share some functionality in common? 
-
-void create_get_header() {
-  printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
-  printf("REQ: Host: %s \r\n", HOST_NAME); 
-  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
-  printf("\r\n"); 
-
-  /*
-  GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
-  */
-
-  snprintf(GET_REQUEST, A_BUFFER_LEN, "REQ: GET %s HTTP/1.0\r\nREQ: Host: %s \r\nREQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n\r\n", URL_FILENAME, HOST_NAME); 
 }
 
 void i_option() { 
