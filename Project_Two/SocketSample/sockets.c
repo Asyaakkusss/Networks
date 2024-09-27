@@ -10,8 +10,8 @@
 
 #define ERROR 1
 #define REQUIRED_ARGC 3
-#define HOST_POS 1
-#define PORT_POS 2
+#define HOST_POS 8080
+#define PORT_POS 80
 #define PROTOCOL "tcp"
 #define BUFLEN 1024
 

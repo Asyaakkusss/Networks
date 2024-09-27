@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <strings.h>
 
 
 #include <stdio.h>
@@ -22,12 +23,25 @@
 
 #define MAX_LENGTH 256
 
+#define A_BUFFER_LEN 1024
+#define HOST_POS 8080
+#define PORT_POS 80
+#define PROTOCOL "tcp"
+
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
 char *filename = NULL; //file name for the -w portion 
 
 char HOST_NAME[MAX_LENGTH]; //create global variable for the host name 
 char URL_FILENAME[MAX_LENGTH]; //file name from the url 
+char GET_REQUEST[A_BUFFER_LEN]; 
+
+
+//global variables for part a 
+struct sockaddr_in sock_addr_info; //specifies transport address and port for AF_INET address family 
+struct hostent *hinfo; //stores informations about given host, such as name, aliases, address type, length, and address list 
+struct protoent *protoinfo; //stores name and protocol numbers corresponding to a given protocol name, such as offical name of protocol, alternate names, and protocol number in host byte order 
+int sd, ret;
 
 //./proj2 [-i] [-q] [-a] -u URL -w filename
 
@@ -137,41 +151,55 @@ void find_url_filename(char *url) {
 
 }
 
-/*comment this out for now to focus on the q option 
 void a_option() {
-    struct sockaddr_in sock_addr_info; 
-    struct hostent *hinfo;
-    struct protoent *protoinfo;
-    char buffer [BUFLEN];
-    int sd, ret;
 
-    //lookup the hostname
-    hinfo = gethostbyname (find_host());
+    if (HOST_NAME[0] == '\0') {
+      fprintf(stderr, "cannot find name: %s", HOST_NAME); 
+      exit(1); 
+    }
 
-    //set endpoint information 
-    memset ((char *)&sock_addr_info, 0x0, sizeof (sock_addr_info)); //set aside memory for socket address structure 
-    sock_addr_info.sin_family = AF_INET; //address family is internet 
-    sock_addr_info.sin_port = htons (atoi (argv [PORT_POS])); //set port number in network byte order 
-    memcpy ((char *)&sock_addr_info.sin_addr,hinfo->h_addr,hinfo->h_length); //copy ip address from the host info to the sock addr info struct 
+    //set endpoint information
+    memset ((char *)&sock_addr_info, 0x0, sizeof (sock_addr_info)); //casting address of sock_addr_info to a char, sets all bytes in block to 0, specifies how many bytes of memory should be set to 0 
+    sock_addr_info.sin_family = AF_INET; //family of sockets set to af_inet 
+    sock_addr_info.sin_port = PORT_POS; //socket port position given 
+    memcpy ((char *)&sock_addr_info.sin_addr,hinfo->h_addr,hinfo->h_length); //destination (sock_addr_info_addr value of sock_addr_info struct), source from hostent, and number of bytes to copy 
 
-    sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto); //create a socket 
+    if ((protoinfo = getprotobyname(PROTOCOL)) == NULL) {
+        fprintf(stderr, "cannot find protocol information for %s", PROTOCOL);
+        exit(1); 
+    }
+
+    //allocate socket 
+    sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto);
+    if (sd < 0) {
+        fprintf(stderr, "cannot create socket");
+        exit(1);
+    }
+
+    /* connect the socket */
+    if (connect (sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info)) < 0) {
+        fprintf (stderr, "cannot connect");
+        exit(1); 
+    }
+
+    //create http get request 
+
+    //send request 
+
+    //read response 
+
+    //print response header 
+
+
+
     
-    //connect the socket
-    connect (sd, (struct sockaddr *)&sock_addr_info, sizeof(sock_addr_info));
-
-    //snarf whatever server provides and print it
-    memset (buffer,0x0,BUFLEN);
-    ret = read (sd,buffer,BUFLEN - 1);
-    if (ret < 0)
-        errexit ("reading error",NULL);
-    fprintf (stdout,"%s\n",buffer);
-            
-    //close & exit
+    /* close & exit */
     close (sd);
+    exit (0);
 }
-*/
 
-void i_option() {
+
+void i_option() { 
   
   printf("INFO: host: %s\n", HOST_NAME); 
   printf("INFO: web_file: %s\n", URL_FILENAME); 
@@ -185,6 +213,12 @@ printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME);
 printf("REQ: Host: %s \r\n", HOST_NAME); 
 printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
 printf("\r\n"); 
+
+  /*
+  GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
+  */
+
+snprintf(GET_REQUEST, A_BUFFER_LEN, "REQ: GET %s HTTP/1.0\r\nREQ: Host: %s \r\nREQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n\r\n", URL_FILENAME, HOST_NAME); 
 }
 
 int main(int argc, char *argv[]) {
@@ -199,6 +233,10 @@ int main(int argc, char *argv[]) {
 
     if (cmd_line_flags == ARG_Q+ARG_U+ARG_W) {
       q_option(); 
+    }
+
+    if (cmd_line_flags == ARG_A+ARG_U+ARG_W) {
+      a_option(); 
     }
 
     return 0; 
