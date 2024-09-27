@@ -182,7 +182,8 @@ void a_option() {
         exit(1); 
     }
 
-    //create http get request 
+    //create http get request (stored as a global variable called GET_REQUEST. )
+
 
     //send request 
 
@@ -198,6 +199,21 @@ void a_option() {
     exit (0);
 }
 
+//QUESTION: is it ok to create a method that runs the q option stuff and then call that method inside i_option to avoid repeating code because if we call the q option that means we can't call the a option and the q and a 
+//options share some functionality in common? 
+
+void create_get_header() {
+  printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
+  printf("REQ: Host: %s \r\n", HOST_NAME); 
+  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
+  printf("\r\n"); 
+
+  /*
+  GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
+  */
+
+  snprintf(GET_REQUEST, A_BUFFER_LEN, "REQ: GET %s HTTP/1.0\r\nREQ: Host: %s \r\nREQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n\r\n", URL_FILENAME, HOST_NAME); 
+}
 
 void i_option() { 
   
@@ -209,16 +225,7 @@ void i_option() {
 
 void q_option() {
 
-printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
-printf("REQ: Host: %s \r\n", HOST_NAME); 
-printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
-printf("\r\n"); 
-
-  /*
-  GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
-  */
-
-snprintf(GET_REQUEST, A_BUFFER_LEN, "REQ: GET %s HTTP/1.0\r\nREQ: Host: %s \r\nREQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n\r\n", URL_FILENAME, HOST_NAME); 
+  create_get_header(); 
 }
 
 int main(int argc, char *argv[]) {
