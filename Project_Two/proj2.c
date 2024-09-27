@@ -160,7 +160,7 @@ void create_get_header() {
   GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
   */
 
-  snprintf(GET_REQUEST, A_BUFFER_LEN, "GET %s HTTP/1.0\r\n" "Host: %s \r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n" "\r\n", URL_FILENAME, HOST_NAME); 
+  snprintf(GET_REQUEST, A_BUFFER_LEN, "GET %s HTTP/1.0\r\n" "Host: %s\r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1\r\n" "\r\n", URL_FILENAME, HOST_NAME); 
 }
 
 void a_option() {
@@ -206,17 +206,15 @@ void a_option() {
     memset(response_header_buffer, 0, A_BUFFER_LEN);  
     read(sd, response_header_buffer, A_BUFFER_LEN - 1); 
 
-
     //we need to truncate, so we make a pointer to the end of the header and terminate the string there 
     char *header_end = strstr(response_header_buffer, "\r\n\r\n"); 
     if (header_end != NULL) {
-
     *header_end = '\0'; 
     }
     //print response header 
     printf("%s\n", response_header_buffer); 
     
-    /* close & exit */
+    //close and exit 
     close (sd);
     exit (0);
 }
