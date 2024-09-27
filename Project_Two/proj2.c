@@ -230,8 +230,8 @@ void i_option() {
 void q_option() {
 
   printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
-  printf("REQ: Host: %s \r\n", HOST_NAME); 
-  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1 \r\n"); 
+  printf("REQ: Host: %s\r\n", HOST_NAME); 
+  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1\r\n"); 
   printf("\r\n"); 
 }
 
