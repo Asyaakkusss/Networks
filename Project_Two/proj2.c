@@ -214,7 +214,7 @@ void a_option() {
     *header_end = '\0'; 
     }
     //print response header 
-    fprintf(stdout, "%s\n", response_header_buffer); 
+    printf("%s\n", response_header_buffer); 
     
     /* close & exit */
     close (sd);
