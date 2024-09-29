@@ -27,6 +27,8 @@
 #define HOST_POS 8080
 #define PORT_POS 80
 #define PROTOCOL "tcp"
+#define RESP_TYPE_LEN 4
+#define IDEAL_RESP_NO 200
 
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
@@ -207,6 +209,39 @@ void create_socket() {
 
 }
 
+void w_option() {
+  /*w: write the entire website onto a file. at the end of the run, you need to have a file. w has no output to the screen. 
+  make sure it is 200. keep reading until you get to the end of a file/socket gets closed.*/
+
+  //creates socket and writes HTTP response header to the RESPONSE_HEADER_BUFFER variable 
+  create_socket(); 
+  //make variable that holds response type 
+  char response_type[RESP_TYPE_LEN]; 
+
+  //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
+
+  //find the first character of the request type in the header
+  char *request_type = strstr(RESPONSE_HEADER_BUFFER, "HTTP/1.1") + 9; 
+
+  //find first occurence of a newline character in the new request_type string 
+  char *end = strchr(request_type, ' '); 
+
+  int length = end - request_type; 
+  strncpy(response_type, request_type, length); 
+  response_type[length] = '\0'; 
+  
+  //validate the response number from the response type 
+  int response_number = atoi(response_type); 
+  
+  if (response_number != IDEAL_RESP_NO) {
+    fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
+  }
+
+  //we find the start of the content when we hit \r\n\r\n
+
+  //we write everything after this to the file 
+}
+
 void a_option() {
 
     create_socket(); 
@@ -230,12 +265,10 @@ void a_option() {
     //close and exit 
     close (sd);
     exit (0);
+
+    w_option(); 
 }
 
-void w_option() {
-  /*w: write the entire website onto a file. at the end of the run, you need to have a file. w has no output to the screen. 
-  make sure it is 200. keep reading until you get to the end of a file/socket gets closed.*/
-}
 
 void i_option() { 
   
@@ -267,8 +300,9 @@ int main(int argc, char *argv[]) {
       q_option(); 
     }
 
-    if (cmd_line_flags == ARG_A+ARG_U+ARG_W) {
-      a_option(); 
+    if ((cmd_line_flags & (ARG_A | ARG_U | ARG_W)) == (ARG_A | ARG_U | ARG_W)) {
+        w_option();
+        //a_option(); 
     }
 
     return 0; 
