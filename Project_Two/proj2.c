@@ -221,7 +221,7 @@ void w_option() {
   //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
 
   //find the first character of the request type in the header
-  char *request_type = strstr(RESPONSE_HEADER_BUFFER, "HTTP/1.1") + 9; 
+  char *request_type = strstr(RESPONSE_HEADER_BUFFER, "HTTP/1.1") + 9;
 
   //find first occurence of a newline character in the new request_type string 
   char *end = strchr(request_type, ' '); 
@@ -235,9 +235,23 @@ void w_option() {
   
   if (response_number != IDEAL_RESP_NO) {
     fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
+    exit(1); 
   }
 
   //we find the start of the content when we hit \r\n\r\n
+  char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
+
+  int content_length = 0; 
+  //find exact length of content to be read variable 
+  while(content_tobe_read[content_length] != '\0') {
+    content_length++; 
+  }
+
+  //write everything into a file 
+  FILE *w_file; 
+  w_file = fopen(filename, "wb"); 
+  fwrite(content_tobe_read, 1, content_length, w_file); 
+  fclose(w_file); 
 
   //we write everything after this to the file 
 }
