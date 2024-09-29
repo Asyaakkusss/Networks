@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
-      "args": ["-i", "-u", "deezballz.net", "-w"], //testing missing url 
+      "args": ["-a", "-u", "http://case.edu/", "-w", "case.html"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/asyaakkus/Networks/Project_Two",

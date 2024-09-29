@@ -166,7 +166,7 @@ void create_get_header() {
 void a_option() {
 
     //create http get request (stored as a global variable called GET_REQUEST. )
-    create_get_header(); 
+    create_get_header();  //instead of doing that, do not call create get header 
 
     char response_header_buffer[A_BUFFER_LEN]; 
 
@@ -204,15 +204,25 @@ void a_option() {
     send(sd, GET_REQUEST, strlen(GET_REQUEST), 0);
     //read response 
     memset(response_header_buffer, 0, A_BUFFER_LEN);  
-    read(sd, response_header_buffer, A_BUFFER_LEN - 1); 
+
+    read(sd, response_header_buffer, A_BUFFER_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
 
     //we need to truncate, so we make a pointer to the end of the header and terminate the string there 
     char *header_end = strstr(response_header_buffer, "\r\n\r\n"); 
     if (header_end != NULL) {
     *header_end = '\0'; 
     }
+
+    char *tokenized_string = strtok(response_header_buffer, "\r\n"); 
+
+    /*we want RSP: to be appended to every line*/
+    while (tokenized_string) {
+      printf("RSP: %s\n", tokenized_string); 
+      
+      tokenized_string = strtok(NULL, "\r\n"); 
+    }
     //print response header 
-    printf("%s\n", response_header_buffer); 
+    //printf("%s\n", response_header_buffer); 
     
     //close and exit 
     close (sd);
