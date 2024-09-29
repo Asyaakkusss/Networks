@@ -35,6 +35,7 @@ char *filename = NULL; //file name for the -w portion
 char HOST_NAME[MAX_LENGTH]; //create global variable for the host name 
 char URL_FILENAME[MAX_LENGTH]; //file name from the url 
 char GET_REQUEST[A_BUFFER_LEN]; 
+char RESPONSE_HEADER_BUFFER[A_BUFFER_LEN]; 
 
 
 //global variables for part a 
@@ -163,12 +164,9 @@ void create_get_header() {
   snprintf(GET_REQUEST, A_BUFFER_LEN, "GET %s HTTP/1.0\r\n" "Host: %s\r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1\r\n" "\r\n", URL_FILENAME, HOST_NAME); 
 }
 
-void a_option() {
-
+void create_socket() {
     //create http get request (stored as a global variable called GET_REQUEST. )
     create_get_header();  //instead of doing that, do not call create get header 
-
-    char response_header_buffer[A_BUFFER_LEN]; 
 
     hinfo = gethostbyname(HOST_NAME); 
     if (hinfo == NULL) {
@@ -203,22 +201,27 @@ void a_option() {
     //send request 
     send(sd, GET_REQUEST, strlen(GET_REQUEST), 0);
     //read response 
-    memset(response_header_buffer, 0, A_BUFFER_LEN);  
+    memset(RESPONSE_HEADER_BUFFER, 0, A_BUFFER_LEN);  
 
-    read(sd, response_header_buffer, A_BUFFER_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
+    read(sd, RESPONSE_HEADER_BUFFER, A_BUFFER_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
 
+}
+
+void a_option() {
+
+    create_socket(); 
     //we need to truncate, so we make a pointer to the end of the header and terminate the string there 
-    char *header_end = strstr(response_header_buffer, "\r\n\r\n"); 
+    char *header_end = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
     if (header_end != NULL) {
     *header_end = '\0'; 
     }
 
-    char *tokenized_string = strtok(response_header_buffer, "\r\n"); 
+    char *tokenized_string = strtok(RESPONSE_HEADER_BUFFER, "\r\n"); 
 
     /*we want RSP: to be appended to every line*/
     while (tokenized_string) {
       printf("RSP: %s\n", tokenized_string); 
-      
+
       tokenized_string = strtok(NULL, "\r\n"); 
     }
     //print response header 
@@ -227,6 +230,11 @@ void a_option() {
     //close and exit 
     close (sd);
     exit (0);
+}
+
+void w_option() {
+  /*w: write the entire website onto a file. at the end of the run, you need to have a file. w has no output to the screen. 
+  make sure it is 200. keep reading until you get to the end of a file/socket gets closed.*/
 }
 
 void i_option() { 
