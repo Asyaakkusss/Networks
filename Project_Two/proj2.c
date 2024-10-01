@@ -283,12 +283,9 @@ void a_option() {
     w_option(); 
 }
 
-
 void i_option() { 
-  
-  printf("INFO: host: %s\n", HOST_NAME); 
-  printf("INFO: web_file: %s\n", URL_FILENAME); 
-  printf("INFO: output_file: %s\n", filename); 
+  create_socket(); 
+  printf("%s", GET_REQUEST); 
 }
 
 
@@ -316,7 +313,7 @@ int main(int argc, char *argv[]) {
 
     if ((cmd_line_flags & (ARG_A | ARG_U | ARG_W)) == (ARG_A | ARG_U | ARG_W)) {
         w_option();
-        //a_option(); 
+        a_option(); 
     }
 
     return 0; 
