@@ -29,6 +29,7 @@
 #define PROTOCOL "tcp"
 #define RESP_TYPE_LEN 4
 #define IDEAL_RESP_NO 200
+#define REDIRECT_RESP 301
 
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
@@ -119,6 +120,7 @@ void parseargs (int argc, char *argv []) {
 
     validateargs(argc, argv); 
 }
+
 
 int find_response_type(char *req_buffer) {
   //make variable that holds response type 
@@ -224,6 +226,41 @@ void create_socket() {
 
 }
 
+/*In this case, the desired web page is not at the URL given on the command line (“http://www.icir.org/mark/”).
+Rather, the web server uses a response with a code of 301 to redirect the client to a different URL—which
+is given in the “Location:” line of the response header. When the “-r” option is given, the web client
+will download the URL given in the redirection message. Redirection can happen more than once. E.g.,
+“www.foo.com” could redirect to “www.bar.com” which could in turn redirect to “bar.com”. When redirects
+happen and the “-q” or “-a” options are given the client must print every request and/or response header
+encountered in the order encountered. The output file given with “-w” will contain the contents of the
+ultimate (last) response. An example:*/
+void r_option() {
+
+  create_socket(); 
+
+  int resp = find_response_type(RESPONSE_HEADER_BUFFER); 
+  char new_url_string[MAX_LENGTH]; 
+  int i = 0; 
+
+  if (resp != 301) {
+    fprintf(stderr, "The code for this website is not a redirect code of 301. Running the -r flag is redundant.\n"); 
+    exit(1); 
+  }
+
+  //find string with location in the response header and move the pointer to the first character to the front of the url 
+  char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + 10; 
+
+  while (location_string[i] != '\r') {
+    new_url_string[i] = location_string[i]; 
+    i++; 
+  }
+  new_url_string[i++] = '\0';
+  strcpy(HOST_NAME, new_url_string); 
+
+  create_socket(); 
+
+}
+
 void w_option() {
   /*w: write the entire website onto a file. at the end of the run, you need to have a file. w has no output to the screen. 
   make sure it is 200. keep reading until you get to the end of a file/socket gets closed.*/
@@ -234,8 +271,10 @@ void w_option() {
   //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
 
   int resp = find_response_type(RESPONSE_HEADER_BUFFER);
-  
-   if (resp != IDEAL_RESP_NO) {
+  if (resp == REDIRECT_RESP) {
+    r_option(); 
+  }
+  if (resp != IDEAL_RESP_NO && resp != REDIRECT_RESP) {
     fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
     exit(1); 
   }
@@ -298,18 +337,6 @@ void q_option() {
   printf("\r\n"); 
 }
 
-/*In this case, the desired web page is not at the URL given on the command line (“http://www.icir.org/mark/”).
-Rather, the web server uses a response with a code of 301 to redirect the client to a different URL—which
-is given in the “Location:” line of the response header. When the “-r” option is given, the web client
-will download the URL given in the redirection message. Redirection can happen more than once. E.g.,
-“www.foo.com” could redirect to “www.bar.com” which could in turn redirect to “bar.com”. When redirects
-happen and the “-q” or “-a” options are given the client must print every request and/or response header
-encountered in the order encountered. The output file given with “-w” will contain the contents of the
-ultimate (last) response. An example:*/
-void r_option() {
-
-}
-
 int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
@@ -331,9 +358,9 @@ int main(int argc, char *argv[]) {
         a_option(); 
     }
 
-    if (cmd_line_flags == ARG_U+ARG_W+ARG_R) {
+    if (cmd_line_flags == ARG_U+ARG_A+ARG_W+ARG_R) {
       w_option(); 
-      r_option(); 
+      a_option(); 
     }
 
     return 0; 
