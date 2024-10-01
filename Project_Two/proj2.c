@@ -120,6 +120,28 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
+void find_request_type(char *req_buffer) {
+  //make variable that holds response type 
+  char response_type[RESP_TYPE_LEN]; 
+  
+  //find the first character of the request type in the header
+  char *request_type = strstr(req_buffer, "HTTP/1.1") + 9;
+
+  //find first occurence of a newline character in the new request_type string 
+  char *end = strchr(request_type, ' '); 
+
+  int length = end - request_type; 
+  strncpy(response_type, request_type, length); 
+  response_type[length] = '\0'; 
+  
+  //validate the response number from the response type 
+  int response_number = atoi(response_type); 
+  
+  if (response_number != IDEAL_RESP_NO) {
+    fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
+    exit(1); 
+  }
+}
 /*for the global variables of host name and url filename*/
 void find_host(char *url) {
   const char* start = strstr(url, "://") + 3; 
@@ -158,10 +180,6 @@ void find_url_filename(char *url) {
 //options share some functionality in common? 
 
 void create_get_header() {
-
-  /*
-  GET [url_filename] HTTP/1.0\r\nHost: [hostname]\r\nCase CSDS 325/425 WebClient 0.1\r\n\r\n
-  */
 
   snprintf(GET_REQUEST, A_BUFFER_LEN, "GET %s HTTP/1.0\r\n" "Host: %s\r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1\r\n" "\r\n", URL_FILENAME, HOST_NAME); 
 }
@@ -215,28 +233,11 @@ void w_option() {
 
   //creates socket and writes HTTP response header to the RESPONSE_HEADER_BUFFER variable 
   create_socket(); 
-  //make variable that holds response type 
-  char response_type[RESP_TYPE_LEN]; 
 
   //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
 
-  //find the first character of the request type in the header
-  char *request_type = strstr(RESPONSE_HEADER_BUFFER, "HTTP/1.1") + 9;
-
-  //find first occurence of a newline character in the new request_type string 
-  char *end = strchr(request_type, ' '); 
-
-  int length = end - request_type; 
-  strncpy(response_type, request_type, length); 
-  response_type[length] = '\0'; 
+  find_request_type(RESPONSE_HEADER_BUFFER);
   
-  //validate the response number from the response type 
-  int response_number = atoi(response_type); 
-  
-  if (response_number != IDEAL_RESP_NO) {
-    fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
-    exit(1); 
-  }
 
   //we find the start of the content when we hit \r\n\r\n
   char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
@@ -297,6 +298,18 @@ void q_option() {
   printf("\r\n"); 
 }
 
+/*In this case, the desired web page is not at the URL given on the command line (“http://www.icir.org/mark/”).
+Rather, the web server uses a response with a code of 301 to redirect the client to a different URL—which
+is given in the “Location:” line of the response header. When the “-r” option is given, the web client
+will download the URL given in the redirection message. Redirection can happen more than once. E.g.,
+“www.foo.com” could redirect to “www.bar.com” which could in turn redirect to “bar.com”. When redirects
+happen and the “-q” or “-a” options are given the client must print every request and/or response header
+encountered in the order encountered. The output file given with “-w” will contain the contents of the
+ultimate (last) response. An example:*/
+void r_option() {
+
+}
+
 int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
@@ -304,16 +317,23 @@ int main(int argc, char *argv[]) {
     find_host(url); 
     find_url_filename(url); 
     if (cmd_line_flags == ARG_I+ARG_U+ARG_W) {
+      w_option(); 
       i_option(); 
     }
 
     if (cmd_line_flags == ARG_Q+ARG_U+ARG_W) {
+      w_option(); 
       q_option(); 
     }
 
     if ((cmd_line_flags & (ARG_A | ARG_U | ARG_W)) == (ARG_A | ARG_U | ARG_W)) {
         w_option();
         a_option(); 
+    }
+
+    if (cmd_line_flags == ARG_U+ARG_W+ARG_R) {
+      w_option(); 
+      r_option(); 
     }
 
     return 0; 
