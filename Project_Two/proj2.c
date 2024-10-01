@@ -120,10 +120,10 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
-void find_request_type(char *req_buffer) {
+int find_response_type(char *req_buffer) {
   //make variable that holds response type 
   char response_type[RESP_TYPE_LEN]; 
-  
+
   //find the first character of the request type in the header
   char *request_type = strstr(req_buffer, "HTTP/1.1") + 9;
 
@@ -137,10 +137,7 @@ void find_request_type(char *req_buffer) {
   //validate the response number from the response type 
   int response_number = atoi(response_type); 
   
-  if (response_number != IDEAL_RESP_NO) {
-    fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
-    exit(1); 
-  }
+  return response_number; 
 }
 /*for the global variables of host name and url filename*/
 void find_host(char *url) {
@@ -236,9 +233,12 @@ void w_option() {
 
   //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
 
-  find_request_type(RESPONSE_HEADER_BUFFER);
+  int resp = find_response_type(RESPONSE_HEADER_BUFFER);
   
-
+   if (resp != IDEAL_RESP_NO) {
+    fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
+    exit(1); 
+  }
   //we find the start of the content when we hit \r\n\r\n
   char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
 
