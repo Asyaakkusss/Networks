@@ -1,0 +1,9 @@
+RSP: HTTP/1.1 200 OK
+RSP: Date: Mon, 30 Sep 2024 19:37:23 GMT
+RSP: Server: Apache
+RSP: Last-Modified: Fri, 27 Sep 2024 13:21:28 GMT
+RSP: ETag: "19a9-62319bb8d0600"
+RSP: Accept-Ranges: bytes
+RSP: Content-Length: 6569
+RSP: Connection: close
+RSP: Content-Type: text/html; charset=UTF-8

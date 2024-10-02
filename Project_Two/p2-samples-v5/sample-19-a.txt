@@ -1,0 +1,23 @@
+RSP: HTTP/1.1 301 Moved Permanently
+RSP: Date: Fri, 27 Sep 2024 14:06:45 GMT
+RSP: Server: Apache
+RSP: Location: http://www.icir.org/mallman/test-files/r2.txt
+RSP: Content-Length: 315
+RSP: Connection: close
+RSP: Content-Type: text/html; charset=iso-8859-1
+RSP: HTTP/1.1 301 Moved Permanently
+RSP: Date: Fri, 27 Sep 2024 14:07:06 GMT
+RSP: Server: Apache
+RSP: Location: http://www.icir.org/mallman/test-files/end-of-chain.txt
+RSP: Content-Length: 325
+RSP: Connection: close
+RSP: Content-Type: text/html; charset=iso-8859-1
+RSP: HTTP/1.1 200 OK
+RSP: Date: Fri, 27 Sep 2024 14:07:31 GMT
+RSP: Server: Apache
+RSP: Last-Modified: Fri, 27 Sep 2024 13:59:07 GMT
+RSP: ETag: "16-6231a4232a0c0"
+RSP: Accept-Ranges: bytes
+RSP: Content-Length: 22
+RSP: Connection: close
+RSP: Content-Type: text/plain; charset=UTF-8

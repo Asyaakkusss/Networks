@@ -1,0 +1,6 @@
+REQ: GET /mark/ HTTP/1.0
+REQ: Host: www.icir.org
+REQ: User-Agent: Case CSDS 325/425 WebClient 0.1
+REQ: GET /mallman/ HTTP/1.0
+REQ: Host: www.icir.org
+REQ: User-Agent: Case CSDS 325/425 WebClient 0.1

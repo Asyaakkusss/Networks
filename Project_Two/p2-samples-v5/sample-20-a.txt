@@ -1,0 +1,7 @@
+RSP: HTTP/1.1 200 OK
+RSP: Server: nginx
+RSP: Date: Mon, 30 Sep 2024 19:56:00 GMT
+RSP: Content-Type: text/html; charset=UTF-8
+RSP: Connection: close
+RSP: Vary: Accept-Encoding
+RSP: Strict-Transport-Security: max-age=31536000

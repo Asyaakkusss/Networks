@@ -1,0 +1,14 @@
+RSP: HTTP/1.1 301 Moved Permanently
+RSP: Date: Fri, 27 Sep 2024 13:47:10 GMT
+RSP: Server: Apache
+RSP: Location: http://www.icir.org/mallman/
+RSP: Content-Length: 298
+RSP: Connection: close
+RSP: Content-Type: text/html; charset=iso-8859-1
+RSP: HTTP/1.1 200 OK
+RSP: Date: Fri, 27 Sep 2024 13:47:18 GMT
+RSP: Server: Apache
+RSP: Accept-Ranges: bytes
+RSP: Content-Length: 6569
+RSP: Connection: close
+RSP: Content-Type: text/html; charset=UTF-8
