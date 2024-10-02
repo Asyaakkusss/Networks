@@ -327,16 +327,24 @@ void a_option() {
 
 void i_option() { 
   create_socket(); 
-  printf("%s", GET_REQUEST); 
+  printf("INFO: host: %s\n", HOST_NAME); 
+  printf("INFO: web_file: %s\n", URL_FILENAME); 
+  printf("INFO: output_file: %s\n", filename); 
 }
 
 
 void q_option() {
+  create_socket();
 
-  printf("REQ: GET %s HTTP/1.0\r\n", URL_FILENAME); 
-  printf("REQ: Host: %s\r\n", HOST_NAME); 
-  printf("REQ: User-Agent: Case CSDS 325/425 WebClient 0.1\r\n"); 
-  printf("\r\n"); 
+  //separate string based on \r\n on each line 
+  char *tokenized_get = strtok(GET_REQUEST, "\r\n");  
+
+  while (tokenized_get != NULL) {
+    printf ("REQ: %s\n",tokenized_get);
+    tokenized_get = strtok (NULL, "\r\n");
+  }
+
+
 }
 
 int main(int argc, char *argv[]) {
@@ -363,6 +371,11 @@ int main(int argc, char *argv[]) {
     if (cmd_line_flags == ARG_U+ARG_A+ARG_W+ARG_R) {
       w_option(); 
       a_option(); 
+    }
+
+    if (cmd_line_flags == ARG_U+ARG_Q+ARG_W+ARG_R) {
+      w_option(); 
+      //q_option(); 
     }
 
     return 0; 
