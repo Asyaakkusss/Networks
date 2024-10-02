@@ -281,18 +281,20 @@ void w_option() {
     exit(1); 
   }
   //we find the start of the content when we hit \r\n\r\n
-  char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
-
-  int content_length = 0; 
-  //find exact length of content to be read variable 
-  while(content_tobe_read[content_length] != '\0') {
-    content_length++; 
-  }
+  char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n") + 4; 
 
   //write everything into a file 
   FILE *w_file; 
   w_file = fopen(filename, "wb"); 
-  fwrite(content_tobe_read, 1, content_length, w_file); 
+  int content_length = strlen(content_tobe_read);
+  fwrite(content_tobe_read, 1, content_length, w_file);
+
+  // Continue reading the rest of the content from the socket.
+  char buffer[A_BUFFER_LEN];
+  int bytes_read;
+  while ((bytes_read = read(sd, buffer, sizeof(buffer))) > 0) {
+      fwrite(buffer, 1, bytes_read, w_file);
+    }
   fclose(w_file); 
 
   //we write everything after this to the file 
