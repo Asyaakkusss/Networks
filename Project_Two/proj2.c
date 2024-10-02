@@ -255,7 +255,9 @@ void r_option() {
     i++; 
   }
   new_url_string[i++] = '\0';
-  strcpy(HOST_NAME, new_url_string); 
+
+  find_host(new_url_string); 
+  find_url_filename(new_url_string); 
 
   create_socket(); 
 
