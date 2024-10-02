@@ -373,6 +373,10 @@ int main(int argc, char *argv[]) {
       a_option(); 
     }
 
+    if (cmd_line_flags == ARG_U+ARG_W) {
+      w_option(); 
+    }
+
     if (cmd_line_flags == ARG_U+ARG_Q+ARG_W+ARG_R) {
       w_option(); 
       //q_option(); 

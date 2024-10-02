@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
-      "args": ["-w", "/dev/null", "-q", "-u", "http://www.icir.org/mark/", "-r"],
+      "args": ["-q", "-u", "http://www.icir.org", "-w", "/dev/null"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/asyaakkus/Networks/Project_Two",
