@@ -320,8 +320,6 @@ void a_option() {
 
       tokenized_string = strtok(NULL, "\r\n"); 
     }
-    //print response header 
-    //printf("%s\n", response_header_buffer); 
     
     //close and exit 
     close (sd);
