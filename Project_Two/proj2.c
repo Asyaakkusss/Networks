@@ -316,7 +316,7 @@ void a_option() {
 
     /*we want RSP: to be appended to every line*/
     while (tokenized_string) {
-      printf("RSP: %s\n", tokenized_string); 
+      printf("RSP: %s\r\n", tokenized_string); 
 
       tokenized_string = strtok(NULL, "\r\n"); 
     }
