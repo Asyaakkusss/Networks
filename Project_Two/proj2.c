@@ -30,7 +30,10 @@
 #define RESP_TYPE_LEN 4
 #define IDEAL_RESP_NO 200
 #define REDIRECT_RESP 301
-
+#define REQUEST_TYPE_PTR_ORIENTATION 9 
+#define URL_PTR_ORIENTATION 3
+#define LOCATION_PTR_ORIENTATION 10 
+#define TOREAD_CONTENT_PTR 4 
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
 char *filename = NULL; //file name for the -w portion 
@@ -127,7 +130,7 @@ int find_response_type(char *req_buffer) {
   char response_type[RESP_TYPE_LEN]; 
 
   //find the first character of the request type in the header
-  char *request_type = strstr(req_buffer, "HTTP/1.1") + 9;
+  char *request_type = strstr(req_buffer, "HTTP/1.1") + REQUEST_TYPE_PTR_ORIENTATION;
 
   //find first occurence of a newline character in the new request_type string 
   char *end = strchr(request_type, ' '); 
@@ -143,7 +146,7 @@ int find_response_type(char *req_buffer) {
 }
 /*for the global variables of host name and url filename*/
 void find_host(char *url) {
-  const char* start = strstr(url, "://") + 3; 
+  const char* start = strstr(url, "://") + URL_PTR_ORIENTATION; 
 
   const char* end = strchr(start, '/'); 
 
@@ -159,7 +162,7 @@ void find_host(char *url) {
 }
 
 void find_url_filename(char *url) {
-  const char* start = strstr(url, "://") + 3; 
+  const char* start = strstr(url, "://") + URL_PTR_ORIENTATION; 
 
   const char* end = strchr(start, '/'); 
 
@@ -248,7 +251,7 @@ void r_option() {
   }
 
   //find string with location in the response header and move the pointer to the first character to the front of the url 
-  char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + 10; 
+  char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + LOCATION_PTR_ORIENTATION; 
 
   while (location_string[i] != '\r') {
     new_url_string[i] = location_string[i]; 
@@ -281,7 +284,7 @@ void w_option() {
     exit(1); 
   }
   //we find the start of the content when we hit \r\n\r\n
-  char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n") + 4; 
+  char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n") + TOREAD_CONTENT_PTR; 
 
   //write everything into a file 
   FILE *w_file; 
@@ -334,20 +337,19 @@ void i_option() {
   printf("INFO: output_file: %s\n", filename); 
 }
 
-
 void q_option() {
   create_socket();
 
   //separate string based on \r\n on each line 
   char *tokenized_get = strtok(GET_REQUEST, "\r\n");  
-
   while (tokenized_get != NULL) {
-    printf ("REQ: %s\n",tokenized_get);
+    printf ("REQ: %s\r\n",tokenized_get);
     tokenized_get = strtok (NULL, "\r\n");
+  }
   }
 
 
-}
+
 
 int main(int argc, char *argv[]) {
 
