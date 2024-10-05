@@ -283,19 +283,30 @@ void w_option() {
     fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
     exit(1); 
   }
+
   //we find the start of the content when we hit \r\n\r\n
   char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n") + TOREAD_CONTENT_PTR; 
-
+  FILE *sockptr = fdopen(sd, "rb"); 
   //write everything into a file 
   FILE *w_file; 
   w_file = fopen(filename, "wb"); 
-  int content_length = strlen(content_tobe_read);
-  fwrite(content_tobe_read, 1, content_length, w_file);
+  
+  //number of bytes between start and end of header 
+  int header_end = content_tobe_read - RESPONSE_HEADER_BUFFER; 
 
+  //remaining header bytes without the starting response block of text
+  int remaining_header_bytes = A_BUFFER_LEN - header_end - 1; 
+
+  if (remaining_header_bytes > 0) {
+    fwrite(content_tobe_read, sizeof(unsigned char), remaining_header_bytes, w_file); 
+  }
+
+  
+ 
   // Continue reading the rest of the content from the socket.
   char buffer[A_BUFFER_LEN];
   int bytes_read;
-  while ((bytes_read = read(sd, buffer, sizeof(buffer))) > 0) {
+  while ((bytes_read = fread(buffer, sizeof(unsigned char), A_BUFFER_LEN, sockptr)) > 0) {
       fwrite(buffer, 1, bytes_read, w_file);
     }
   fclose(w_file); 
