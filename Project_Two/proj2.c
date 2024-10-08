@@ -148,7 +148,6 @@ void parseargs (int argc, char *argv []) {
 
 
 int find_response_type(char *resp_buffer) {
-
   //make variable that holds response type which is where we get the response from 
   char response_type[RESP_TYPE_LEN]; 
 
@@ -169,7 +168,6 @@ int find_response_type(char *resp_buffer) {
 }
 
 const char* space_position(char *url) {
-
   const char* start = strstr(url, "://") + URL_PTR_ORIENTATION; 
 
   return start; 
@@ -208,11 +206,8 @@ void find_url_filename(char *url) {
 
 }
 
-//QUESTION: is it ok to create a method that runs the q option stuff and then call that method inside i_option to avoid repeating code because if we call the q option that means we can't call the a option and the q and a 
-//options share some functionality in common? 
-
+//function for creating the get header necessary for some of the command line options 
 void create_get_header() {
-
   snprintf(GET_REQUEST, REQ_RESP_BUF_LEN, "GET %s HTTP/1.0\r\n" "Host: %s\r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1\r\n" "\r\n", URL_FILENAME, HOST_NAME); 
 }
 
@@ -232,12 +227,13 @@ void create_socket() {
     sock_addr_info.sin_port = htons(PORT_POS); //socket port position given and converted to network byte order 
     memcpy ((char *)&sock_addr_info.sin_addr,hinfo->h_addr,hinfo->h_length); //destination (sock_addr_info_addr value of sock_addr_info struct), source from hostent, and number of bytes to copy 
 
+    //check to make sure we have the proper protocol 
     if ((protoinfo = getprotobyname(PROTOCOL)) == NULL) {
         fprintf(stderr, "cannot find protocol information for %s", PROTOCOL);
         exit(1); 
     }
 
-    //allocate socket 
+    //allocate socket and create it. sd will return -1 if creation unsuccessful 
     sd = socket(PF_INET, SOCK_STREAM, protoinfo->p_proto);
     if (sd < 0) {
         fprintf(stderr, "cannot create socket");
@@ -252,17 +248,15 @@ void create_socket() {
 
     //send request 
     send(sd, GET_REQUEST, strlen(GET_REQUEST), 0);
+
     //read response 
     memset(RESPONSE_HEADER_BUFFER, 0, REQ_RESP_BUF_LEN);  
     
-    BYTES_READ = read(sd, RESPONSE_HEADER_BUFFER, REQ_RESP_BUF_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
-
+    //assign value to this variable in order to read just the right amount of characters from the header to the file 
+    BYTES_READ = read(sd, RESPONSE_HEADER_BUFFER, REQ_RESP_BUF_LEN - sizeof(unsigned char)); 
 }
 
 void w_option() {
-  /*w: write the entire website onto a file. at the space_position of the run, you need to have a file. w has no output to the screen. 
-  make sure it is 200. keep reading until you get to the space_position of a file/socket gets closed.*/
-
   //creates socket and writes HTTP response header to the RESPONSE_HEADER_BUFFER variable 
   create_socket(); 
 
@@ -277,6 +271,7 @@ void w_option() {
   //we find the start of the content when we hit \r\n\r\n
   char *content_tobe_read = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n") + TOREAD_CONTENT_PTR; 
   FILE *sockptr = fdopen(sd, "rb"); 
+
   //write everything into a file 
   FILE *w_file; 
   w_file = fopen(filename, "wb"); 
@@ -293,20 +288,16 @@ void w_option() {
   
  
   // Continue reading the rest of the content from the socket.
-  char buffer[W_OPT_BUFFER_LEN];
+  char socket_buffer[W_OPT_BUFFER_LEN];
   int bytes_read;
-  while ((bytes_read = fread(buffer, sizeof(unsigned char), W_OPT_BUFFER_LEN, sockptr)) > 0) {
-      fwrite(buffer, 1, bytes_read, w_file);
+  while ((bytes_read = fread(socket_buffer, sizeof(unsigned char), W_OPT_BUFFER_LEN, sockptr)) > 0) {
+      fwrite(socket_buffer, 1, bytes_read, w_file);
     }
+
   fclose(w_file); 
-
-  //we write everything after this to the file  
-
-  //we write everything after this to the file 
 }
 
 void a_option() {
-
     create_socket(); 
 
     //we need to truncate, so we make a pointer to the space_position of the header and terminate the string there 
@@ -326,8 +317,6 @@ void a_option() {
     
     //close and exit 
     close (sd);
-
-    //w_option(); 
 }
 
 void i_option() { 
@@ -348,35 +337,24 @@ void q_option() {
   }
 }
 
-/*In this case, the desired web page is not at the URL given on the command line (“http://www.icir.org/mark/”).
-Rather, the web server uses a response with a code of 301 to redirect the client to a different URL—which
-is given in the “Location:” line of the response header. When the “-r” option is given, the web client
-will download the URL given in the redirection message. Redirection can happen more than once. E.g.,
-“www.foo.com” could redirect to “www.bar.com” which could in turn redirect to “bar.com”. When redirects
-happen and the “-q” or “-a” options are given the client must print every request and/or response header
-encountered in the order encountered. The output file given with “-w” will contain the contents of the
-ultimate (last) response. An example:*/
-
 void r_option() {
   create_socket(); 
   int resp = find_response_type(RESPONSE_HEADER_BUFFER); 
-  if (resp != 301) {
+  if (resp != REDIRECT_RESP_NO) {
     exit(1); 
   }
-
-  //if the response is 301, then enter a loop. run the loop until the extracted response is 201
   
   //find string with location in the response header and move the pointer to the first character to the front of the url 
   char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + LOCATION_PTR_ORIENTATION; 
   char *location_string_end = strstr(location_string, "\r\n"); 
   int response_code_length = location_string_end - location_string; 
-  char buffer[response_code_length + 1]; 
+  char url_buffer[response_code_length + sizeof(unsigned char)]; 
 
-  strncpy(buffer, location_string, response_code_length); 
-  find_host(buffer); 
+  strncpy(url_buffer, location_string, response_code_length); 
+  find_host(url_buffer); 
 
   
-  find_url_filename(buffer); 
+  find_url_filename(url_buffer); 
   
   a_option(); 
 }
@@ -426,5 +404,4 @@ int main(int argc, char *argv[]) {
     }
 
     return 0; 
-
 }
