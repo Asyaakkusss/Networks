@@ -155,6 +155,7 @@ int is_valid_url(char *url) {
   }
   return 1; 
 }
+
 int find_response_type(char *resp_buffer) {
   //make variable that holds response type which is where we get the response from 
   char response_type[RESP_TYPE_LEN]; 
