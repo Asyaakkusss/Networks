@@ -43,6 +43,7 @@ Description: This is the main location of the code for project 2. It implements 
 #define URL_PTR_ORIENTATION 3
 #define LOCATION_PTR_ORIENTATION 10 
 #define TOREAD_CONTENT_PTR 4 
+#define VALID_URL_CHECK_COMP 7 
 
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
@@ -146,7 +147,14 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
-
+int is_valid_url(char *url) {
+  if ((strncmp(url, "http://", VALID_URL_CHECK_COMP) && 
+       strncmp(url, "HTTP://", VALID_URL_CHECK_COMP) && 
+       strncmp(url, "Http://", VALID_URL_CHECK_COMP)) != 0) {
+    return 0; 
+  }
+  return 1; 
+}
 int find_response_type(char *resp_buffer) {
   //make variable that holds response type which is where we get the response from 
   char response_type[RESP_TYPE_LEN]; 
@@ -175,6 +183,12 @@ const char* space_position(char *url) {
 
 /*for the global variables of host name and url filename*/
 void find_host(char *url) {
+
+  if (!is_valid_url(url)) {
+    fprintf(stderr, "error: url can only be http type.\n"); 
+    exit(1); 
+  }
+
   const char* host_start = space_position(url); 
 
   const char* space_position = strchr(host_start, '/'); 
