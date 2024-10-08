@@ -51,6 +51,7 @@ struct sockaddr_in sock_addr_info; //specifies transport address and port for AF
 struct hostent *hinfo; //stores informations about given host, such as name, aliases, address type, length, and address list 
 struct protoent *protoinfo; //stores name and protocol numbers corresponding to a given protocol name, such as offical name of protocol, alternate names, and protocol number in host byte order 
 int sd, ret;
+int BYTES_READ; 
 
 //./proj2 [-i] [-q] [-a] -u URL -w filename
 
@@ -227,8 +228,8 @@ void create_socket() {
     send(sd, GET_REQUEST, strlen(GET_REQUEST), 0);
     //read response 
     memset(RESPONSE_HEADER_BUFFER, 0, A_BUFFER_LEN);  
-
-    read(sd, RESPONSE_HEADER_BUFFER, A_BUFFER_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
+    
+    BYTES_READ = read(sd, RESPONSE_HEADER_BUFFER, A_BUFFER_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
 
 }
 
@@ -253,18 +254,12 @@ void w_option() {
   //write everything into a file 
   FILE *w_file; 
   w_file = fopen(filename, "wb"); 
-  int total_header_bytes = 0; 
-  //figure out how many bytes we need to read 
-  while (RESPONSE_HEADER_BUFFER[total_header_bytes] != '\0') {
-    total_header_bytes++; 
-  }
-  total_header_bytes++; 
+  
   //number of bytes between start and end of header 
   int header_end = content_tobe_read - RESPONSE_HEADER_BUFFER; 
 
   //remaining header bytes without the starting response block of text
-  int remaining_header_bytes = total_header_bytes - header_end - sizeof(unsigned char); 
-
+  int remaining_header_bytes = BYTES_READ - header_end; 
   if (remaining_header_bytes > 0) {
     fwrite(content_tobe_read, sizeof(unsigned char), remaining_header_bytes, w_file); 
   }
