@@ -147,10 +147,24 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
+int strn_compare(char *url_string, char *http_string, int n) {
+    for (int i = 0; i < n; i++) {
+        char c1 = tolower((unsigned char)url_string[i]);
+        char c2 = tolower((unsigned char)http_string[i]);
+
+        if (c1 != c2) {
+            return (unsigned char)c1 - (unsigned char)c2;
+        }
+
+        if (c1 == '\0') {
+            break;
+        }
+    }
+    return 0;
+}
+
 int is_valid_url(char *url) {
-  if ((strncmp(url, "http://", VALID_URL_CHECK_COMP) && 
-       strncmp(url, "HTTP://", VALID_URL_CHECK_COMP) && 
-       strncmp(url, "Http://", VALID_URL_CHECK_COMP)) != 0) {
+  if ((strn_compare(url, "http://", VALID_URL_CHECK_COMP)) != 0) {
     return 0; 
   }
   return 1; 
