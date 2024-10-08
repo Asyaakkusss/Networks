@@ -1,3 +1,11 @@
+/*
+Name: Asya Akkus 
+Case Network ID: aya29
+File Name: Makefile 
+Date Created: 9/24/2024
+Description: This is the main location of the code for project 2. It implements the I, Q, A, U and W options.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
