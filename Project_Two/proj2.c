@@ -24,6 +24,7 @@
 #define MAX_LENGTH 256
 
 #define A_BUFFER_LEN 1024
+#define W_BUFFER_LEN 20
 #define HOST_POS 8080
 #define PORT_POS 80
 #define PROTOCOL "tcp"
@@ -40,6 +41,7 @@ char *filename = NULL; //file name for the -w portion
 
 char HOST_NAME[MAX_LENGTH]; //create global variable for the host name 
 char URL_FILENAME[MAX_LENGTH]; //file name from the url 
+char URL_REDIRECT[MAX_LENGTH]; //create global variable for both the host name and url for processing the redirect request 
 char GET_REQUEST[A_BUFFER_LEN]; 
 char RESPONSE_HEADER_BUFFER[A_BUFFER_LEN]; 
 
@@ -172,8 +174,9 @@ void find_url_filename(char *url) {
 
   //if there is no web file, return a / and then null terminate the string so no extra garbage is printed 
   else {
-    URL_FILENAME[0] = '/'; 
-    URL_FILENAME[1] = '\0'; 
+    //URL_FILENAME[0] = '/'; 
+    //URL_FILENAME[1] = '\0'; 
+    strcpy(URL_FILENAME, "/\0"); 
   }
 
 }
@@ -229,43 +232,6 @@ void create_socket() {
 
 }
 
-/*In this case, the desired web page is not at the URL given on the command line (“http://www.icir.org/mark/”).
-Rather, the web server uses a response with a code of 301 to redirect the client to a different URL—which
-is given in the “Location:” line of the response header. When the “-r” option is given, the web client
-will download the URL given in the redirection message. Redirection can happen more than once. E.g.,
-“www.foo.com” could redirect to “www.bar.com” which could in turn redirect to “bar.com”. When redirects
-happen and the “-q” or “-a” options are given the client must print every request and/or response header
-encountered in the order encountered. The output file given with “-w” will contain the contents of the
-ultimate (last) response. An example:*/
-void r_option() {
-
-  create_socket(); 
-
-  int resp = find_response_type(RESPONSE_HEADER_BUFFER); 
-  char new_url_string[MAX_LENGTH]; 
-  int i = 0; 
-
-  if (resp != 301) {
-    fprintf(stderr, "The code for this website is not a redirect code of 301. Running the -r flag is redundant.\n"); 
-    exit(1); 
-  }
-
-  //find string with location in the response header and move the pointer to the first character to the front of the url 
-  char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + LOCATION_PTR_ORIENTATION; 
-
-  while (location_string[i] != '\r') {
-    new_url_string[i] = location_string[i]; 
-    i++; 
-  }
-  new_url_string[i++] = '\0';
-
-  find_host(new_url_string); 
-  find_url_filename(new_url_string); 
-
-  create_socket(); 
-
-}
-
 void w_option() {
   /*w: write the entire website onto a file. at the end of the run, you need to have a file. w has no output to the screen. 
   make sure it is 200. keep reading until you get to the end of a file/socket gets closed.*/
@@ -274,11 +240,8 @@ void w_option() {
   create_socket(); 
 
   //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
-
   int resp = find_response_type(RESPONSE_HEADER_BUFFER);
-  if (resp == REDIRECT_RESP) {
-    r_option(); 
-  }
+ 
   if (resp != IDEAL_RESP_NO && resp != REDIRECT_RESP) {
     fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
     exit(1); 
@@ -290,12 +253,17 @@ void w_option() {
   //write everything into a file 
   FILE *w_file; 
   w_file = fopen(filename, "wb"); 
-  
+  int total_header_bytes = 0; 
+  //figure out how many bytes we need to read 
+  while (RESPONSE_HEADER_BUFFER[total_header_bytes] != '\0') {
+    total_header_bytes++; 
+  }
+  total_header_bytes++; 
   //number of bytes between start and end of header 
   int header_end = content_tobe_read - RESPONSE_HEADER_BUFFER; 
 
   //remaining header bytes without the starting response block of text
-  int remaining_header_bytes = A_BUFFER_LEN - header_end - 1; 
+  int remaining_header_bytes = total_header_bytes - header_end - sizeof(unsigned char); 
 
   if (remaining_header_bytes > 0) {
     fwrite(content_tobe_read, sizeof(unsigned char), remaining_header_bytes, w_file); 
@@ -304,12 +272,14 @@ void w_option() {
   
  
   // Continue reading the rest of the content from the socket.
-  char buffer[A_BUFFER_LEN];
+  char buffer[W_BUFFER_LEN];
   int bytes_read;
-  while ((bytes_read = fread(buffer, sizeof(unsigned char), A_BUFFER_LEN, sockptr)) > 0) {
+  while ((bytes_read = fread(buffer, sizeof(unsigned char), W_BUFFER_LEN, sockptr)) > 0) {
       fwrite(buffer, 1, bytes_read, w_file);
     }
   fclose(w_file); 
+
+  //we write everything after this to the file  
 
   //we write everything after this to the file 
 }
@@ -317,12 +287,13 @@ void w_option() {
 void a_option() {
 
     create_socket(); 
+
     //we need to truncate, so we make a pointer to the end of the header and terminate the string there 
     char *header_end = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
     if (header_end != NULL) {
     *header_end = '\0'; 
     }
-
+    
     char *tokenized_string = strtok(RESPONSE_HEADER_BUFFER, "\r\n"); 
 
     /*we want RSP: to be appended to every line*/
@@ -334,9 +305,8 @@ void a_option() {
     
     //close and exit 
     close (sd);
-    exit (0);
 
-    w_option(); 
+    //w_option(); 
 }
 
 void i_option() { 
@@ -355,9 +325,43 @@ void q_option() {
     printf ("REQ: %s\r\n",tokenized_get);
     tokenized_get = strtok (NULL, "\r\n");
   }
+}
+
+/*In this case, the desired web page is not at the URL given on the command line (“http://www.icir.org/mark/”).
+Rather, the web server uses a response with a code of 301 to redirect the client to a different URL—which
+is given in the “Location:” line of the response header. When the “-r” option is given, the web client
+will download the URL given in the redirection message. Redirection can happen more than once. E.g.,
+“www.foo.com” could redirect to “www.bar.com” which could in turn redirect to “bar.com”. When redirects
+happen and the “-q” or “-a” options are given the client must print every request and/or response header
+encountered in the order encountered. The output file given with “-w” will contain the contents of the
+ultimate (last) response. An example:*/
+/*
+void r_option() {
+  create_socket(); 
+  int resp = find_response_type(RESPONSE_HEADER_BUFFER); 
+  char buffer[250]; 
+  if (resp != 301) {
+    exit(1); 
   }
 
+  //if the response is 301, then enter a loop. run the loop until the extracted response is 201
+  
+  while (resp == 301) {
+  //find string with location in the response header and move the pointer to the first character to the front of the url 
+  char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + LOCATION_PTR_ORIENTATION; 
 
+  int i = 0; 
+  while (*location_string != '\r' && *location_string != '\n' && i < sizeof(buffer) - 1) {
+    buffer[i] = location_string; 
+    location_string++; 
+    i++; 
+  }
+
+  find_host(buffer); 
+  find_url_filename(buffer); 
+  }
+
+}*/
 
 
 int main(int argc, char *argv[]) {
@@ -376,14 +380,9 @@ int main(int argc, char *argv[]) {
       q_option(); 
     }
 
-    if ((cmd_line_flags & (ARG_A | ARG_U | ARG_W)) == (ARG_A | ARG_U | ARG_W)) {
+    if (cmd_line_flags == ARG_A+ARG_U+ARG_W) {
         w_option();
         a_option(); 
-    }
-
-    if (cmd_line_flags == ARG_U+ARG_A+ARG_W+ARG_R) {
-      w_option(); 
-      a_option(); 
     }
 
     if (cmd_line_flags == ARG_U+ARG_W) {
@@ -392,7 +391,13 @@ int main(int argc, char *argv[]) {
 
     if (cmd_line_flags == ARG_U+ARG_Q+ARG_W+ARG_R) {
       w_option(); 
-      //q_option(); 
+      q_option(); 
+    }
+
+    if (cmd_line_flags == ARG_U+ARG_W+ARG_R+ARG_A) {
+      w_option(); 
+      a_option(); 
+      //r_option(); 
     }
 
     return 0; 
