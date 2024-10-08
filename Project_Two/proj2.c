@@ -29,39 +29,39 @@ Description: This is the main location of the code for project 2. It implements 
 #define ARG_W  0x10 //16
 #define ARG_R  0x20 //32
 
-#define MAX_LENGTH 256
+#define WEB_AND_FILE_LEN 256
 
-#define A_BUFFER_LEN 1024
-#define W_BUFFER_LEN 20
+#define REQ_RESP_BUF_LEN 1024
+#define W_OPT_BUFFER_LEN 20
 #define HOST_POS 8080
 #define PORT_POS 80
 #define PROTOCOL "tcp"
 #define RESP_TYPE_LEN 4
 #define IDEAL_RESP_NO 200
-#define REDIRECT_RESP 301
+#define REDIRECT_RESP_NO 301
 #define REQUEST_TYPE_PTR_ORIENTATION 9 
 #define URL_PTR_ORIENTATION 3
 #define LOCATION_PTR_ORIENTATION 10 
 #define TOREAD_CONTENT_PTR 4 
+
 unsigned short cmd_line_flags = 0;
 char *url = NULL;
 char *filename = NULL; //file name for the -w portion 
 
-char HOST_NAME[MAX_LENGTH]; //create global variable for the host name 
-char URL_FILENAME[MAX_LENGTH]; //file name from the url 
-char URL_REDIRECT[MAX_LENGTH]; //create global variable for both the host name and url for processing the redirect request 
-char GET_REQUEST[A_BUFFER_LEN]; 
-char RESPONSE_HEADER_BUFFER[A_BUFFER_LEN]; 
+char HOST_NAME[WEB_AND_FILE_LEN]; //create global variable for the host name 
+char URL_FILENAME[WEB_AND_FILE_LEN]; //file name from the url 
+char URL_REDIRECT[WEB_AND_FILE_LEN]; //create global variable for both the host name and url for processing the redirect request 
+char GET_REQUEST[REQ_RESP_BUF_LEN]; 
+char RESPONSE_HEADER_BUFFER[REQ_RESP_BUF_LEN]; 
 
 
 //global variables for part a 
 struct sockaddr_in sock_addr_info; //specifies transport address and port for AF_INET address family 
-struct hostent *hinfo; //stores informations about given host, such as name, aliases, address type, length, and address list 
+struct hostent *hinfo; //stores informations about given host, such as name, aliases, address type, response_code_length, and address list 
 struct protoent *protoinfo; //stores name and protocol numbers corresponding to a given protocol name, such as offical name of protocol, alternate names, and protocol number in host byte order 
-int sd, ret;
-int BYTES_READ; 
+int sd; //sd determines whether the socket is properly created
+int BYTES_READ; //bytes read from the socket in order to properly process content from the header for smaller files 
 
-//./proj2 [-i] [-q] [-a] -u URL -w filename
 
 void usage (char *progname) {
     fprintf (stderr,"%s [-i] [-q] [-a] -u URL -w filename [-r]\n", progname);
@@ -147,55 +147,62 @@ void parseargs (int argc, char *argv []) {
 }
 
 
-int find_response_type(char *req_buffer) {
-  //make variable that holds response type 
+int find_response_type(char *resp_buffer) {
+
+  //make variable that holds response type which is where we get the response from 
   char response_type[RESP_TYPE_LEN]; 
 
   //find the first character of the request type in the header
-  char *request_type = strstr(req_buffer, "HTTP/1.1") + REQUEST_TYPE_PTR_ORIENTATION;
+  char *response_time = strstr(resp_buffer, "HTTP/1.1") + REQUEST_TYPE_PTR_ORIENTATION;
 
-  //find first occurence of a newline character in the new request_type string 
-  char *end = strchr(request_type, ' '); 
+  //find first occurence of a newline character in the new response_time string 
+  char *space_position = strchr(response_time, ' '); 
 
-  int length = end - request_type; 
-  strncpy(response_type, request_type, length); 
-  response_type[length] = '\0'; 
+  int response_code_length = space_position - response_time; 
+  strncpy(response_type, response_time, response_code_length); 
+  response_type[response_code_length] = '\0'; 
   
   //validate the response number from the response type 
-  int response_number = atoi(response_type); 
+  int response_code = atoi(response_type); 
   
-  return response_number; 
+  return response_code; 
 }
-/*for the global variables of host name and url filename*/
-void find_host(char *url) {
+
+const char* space_position(char *url) {
+
   const char* start = strstr(url, "://") + URL_PTR_ORIENTATION; 
 
-  const char* end = strchr(start, '/'); 
+  return start; 
+}
 
-  if (end != NULL) {
-    strncpy(HOST_NAME, start, end-start); 
-    HOST_NAME[end - start] = '\0'; 
+/*for the global variables of host name and url filename*/
+void find_host(char *url) {
+  const char* host_start = space_position(url); 
+
+  const char* space_position = strchr(host_start, '/'); 
+
+  if (space_position != NULL) {
+    strncpy(HOST_NAME, host_start, space_position-host_start); 
+    HOST_NAME[space_position - host_start] = '\0'; 
   }
 
   else {
-    strcpy(HOST_NAME, start); 
+    strcpy(HOST_NAME, host_start); 
   }
 
 }
 
 void find_url_filename(char *url) {
-  const char* start = strstr(url, "://") + URL_PTR_ORIENTATION; 
+  const char* file_start = space_position(url); 
 
-  const char* end = strchr(start, '/'); 
+  const char* space_position = strchr(file_start, '/'); 
 
-  if (end != NULL) {
-  strcpy(URL_FILENAME, end); 
+  if (space_position != NULL) {
+  strcpy(URL_FILENAME, space_position); 
   }
 
   //if there is no web file, return a / and then null terminate the string so no extra garbage is printed 
   else {
-    //URL_FILENAME[0] = '/'; 
-    //URL_FILENAME[1] = '\0'; 
     strcpy(URL_FILENAME, "/\0"); 
   }
 
@@ -206,7 +213,7 @@ void find_url_filename(char *url) {
 
 void create_get_header() {
 
-  snprintf(GET_REQUEST, A_BUFFER_LEN, "GET %s HTTP/1.0\r\n" "Host: %s\r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1\r\n" "\r\n", URL_FILENAME, HOST_NAME); 
+  snprintf(GET_REQUEST, REQ_RESP_BUF_LEN, "GET %s HTTP/1.0\r\n" "Host: %s\r\n" "User-Agent: Case CSDS 325/425 WebClient 0.1\r\n" "\r\n", URL_FILENAME, HOST_NAME); 
 }
 
 void create_socket() {
@@ -246,15 +253,15 @@ void create_socket() {
     //send request 
     send(sd, GET_REQUEST, strlen(GET_REQUEST), 0);
     //read response 
-    memset(RESPONSE_HEADER_BUFFER, 0, A_BUFFER_LEN);  
+    memset(RESPONSE_HEADER_BUFFER, 0, REQ_RESP_BUF_LEN);  
     
-    BYTES_READ = read(sd, RESPONSE_HEADER_BUFFER, A_BUFFER_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
+    BYTES_READ = read(sd, RESPONSE_HEADER_BUFFER, REQ_RESP_BUF_LEN - 1); //try to read this line by line use fgets (dump web object written to local file through -w)
 
 }
 
 void w_option() {
-  /*w: write the entire website onto a file. at the end of the run, you need to have a file. w has no output to the screen. 
-  make sure it is 200. keep reading until you get to the end of a file/socket gets closed.*/
+  /*w: write the entire website onto a file. at the space_position of the run, you need to have a file. w has no output to the screen. 
+  make sure it is 200. keep reading until you get to the space_position of a file/socket gets closed.*/
 
   //creates socket and writes HTTP response header to the RESPONSE_HEADER_BUFFER variable 
   create_socket(); 
@@ -262,7 +269,7 @@ void w_option() {
   //we have to first ensure that the request is a 200 type and then print a meaningful error message if it isnt. we parse the first part of the header in order to ascertain this 
   int resp = find_response_type(RESPONSE_HEADER_BUFFER);
  
-  if (resp != IDEAL_RESP_NO && resp != REDIRECT_RESP) {
+  if (resp != IDEAL_RESP_NO && resp != REDIRECT_RESP_NO) {
     fprintf(stderr, "the code for this website is not an OK code of 200. Please try another link\n"); 
     exit(1); 
   }
@@ -274,7 +281,7 @@ void w_option() {
   FILE *w_file; 
   w_file = fopen(filename, "wb"); 
   
-  //number of bytes between start and end of header 
+  //number of bytes between start and space_position of header 
   int header_end = content_tobe_read - RESPONSE_HEADER_BUFFER; 
 
   //remaining header bytes without the starting response block of text
@@ -286,9 +293,9 @@ void w_option() {
   
  
   // Continue reading the rest of the content from the socket.
-  char buffer[W_BUFFER_LEN];
+  char buffer[W_OPT_BUFFER_LEN];
   int bytes_read;
-  while ((bytes_read = fread(buffer, sizeof(unsigned char), W_BUFFER_LEN, sockptr)) > 0) {
+  while ((bytes_read = fread(buffer, sizeof(unsigned char), W_OPT_BUFFER_LEN, sockptr)) > 0) {
       fwrite(buffer, 1, bytes_read, w_file);
     }
   fclose(w_file); 
@@ -302,7 +309,7 @@ void a_option() {
 
     create_socket(); 
 
-    //we need to truncate, so we make a pointer to the end of the header and terminate the string there 
+    //we need to truncate, so we make a pointer to the space_position of the header and terminate the string there 
     char *header_end = strstr(RESPONSE_HEADER_BUFFER, "\r\n\r\n"); 
     if (header_end != NULL) {
     *header_end = '\0'; 
@@ -362,10 +369,10 @@ void r_option() {
   //find string with location in the response header and move the pointer to the first character to the front of the url 
   char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + LOCATION_PTR_ORIENTATION; 
   char *location_string_end = strstr(location_string, "\r\n"); 
-  int length = location_string_end - location_string; 
-  char buffer[length + 1]; 
+  int response_code_length = location_string_end - location_string; 
+  char buffer[response_code_length + 1]; 
 
-  strncpy(buffer, location_string, length); 
+  strncpy(buffer, location_string, response_code_length); 
   find_host(buffer); 
 
   
