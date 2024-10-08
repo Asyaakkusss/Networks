@@ -68,6 +68,7 @@ void usage (char *progname) {
 
 void validateargs (int argc, char *argv []) {
 
+
   
     // The filename must be present
     if ((cmd_line_flags & ARG_W) == 0 || filename == NULL) {
@@ -78,6 +79,16 @@ void validateargs (int argc, char *argv []) {
     // The URL must be present
     if ((cmd_line_flags & ARG_U) == 0 || url == NULL) {
         fprintf(stderr, "error: -u option must be given with a URL\n"); 
+        usage(argv[0]);
+    }
+
+    //i, q, and a cannot be present a the same time 
+    int count = ((cmd_line_flags & ARG_I) != 0) +
+                ((cmd_line_flags & ARG_Q) != 0) +
+                ((cmd_line_flags & ARG_A) != 0);
+    
+    if (count > 1) {
+        fprintf(stderr, "error: only one of -i, -q, or -a may be given at a time\n");
         usage(argv[0]);
     }
 
@@ -390,6 +401,12 @@ int main(int argc, char *argv[]) {
     if (cmd_line_flags == ARG_U+ARG_W+ARG_R+ARG_A) {
       w_option(); 
       a_option(); 
+      r_option(); 
+    }
+
+    if (cmd_line_flags == ARG_U+ARG_W+ARG_R+ARG_Q) {
+      w_option(); 
+      q_option(); 
       r_option(); 
     }
 
