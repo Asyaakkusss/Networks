@@ -330,33 +330,31 @@ will download the URL given in the redirection message. Redirection can happen m
 happen and the “-q” or “-a” options are given the client must print every request and/or response header
 encountered in the order encountered. The output file given with “-w” will contain the contents of the
 ultimate (last) response. An example:*/
-/*
+
 void r_option() {
   create_socket(); 
   int resp = find_response_type(RESPONSE_HEADER_BUFFER); 
-  char buffer[250]; 
   if (resp != 301) {
     exit(1); 
   }
 
   //if the response is 301, then enter a loop. run the loop until the extracted response is 201
   
-  while (resp == 301) {
   //find string with location in the response header and move the pointer to the first character to the front of the url 
   char *location_string = strstr(RESPONSE_HEADER_BUFFER, "Location") + LOCATION_PTR_ORIENTATION; 
+  char *location_string_end = strstr(location_string, "\r\n"); 
+  int length = location_string_end - location_string; 
+  char buffer[length + 1]; 
 
-  int i = 0; 
-  while (*location_string != '\r' && *location_string != '\n' && i < sizeof(buffer) - 1) {
-    buffer[i] = location_string; 
-    location_string++; 
-    i++; 
-  }
-
+  strncpy(buffer, location_string, length); 
   find_host(buffer); 
-  find_url_filename(buffer); 
-  }
 
-}*/
+  
+  find_url_filename(buffer); 
+  
+  a_option(); 
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -392,7 +390,7 @@ int main(int argc, char *argv[]) {
     if (cmd_line_flags == ARG_U+ARG_W+ARG_R+ARG_A) {
       w_option(); 
       a_option(); 
-      //r_option(); 
+      r_option(); 
     }
 
     return 0; 
