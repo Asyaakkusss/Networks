@@ -1,24 +1,10 @@
 /*
-our project will be a simple HTTP server. In general, this will entail following these steps: (i) listening for
-incoming TCP connections on a given port, (ii) reading an HTTP request sent by the client, (iii) sending
-an HTTP response that either provides the requested file or an error message, (iv) shutting down the TCP
-connection and (v) going back to step (i) to process another request.
-The usage of your program—which will be called proj3 —will be run as follows:
-./proj3 -p port -r document_directory -t auth_token
-Specifically:
-• The “-p” option must be present when running your web server and will specify the server port number
-your server will listen on.
-• The “-r” option must be present when running your web server and will specify the “root” directory
-from which your web server will serve files. All files in this directory and all sub-directories (arbitrarily
-deep) will be made available via your web server.
-• The “-t” option must be present when running your web server and will specify an “authentication
-token” that will be needed to terminate your web server (as explained below).
-• The command line arguments may appear in any order.
-• Unknown command line arguments must trigger errors.
-
-./proj3 -p 1947 -t foobar -r ~/doc-root
+Name: Asya Akkus 
+Case Network ID: aya29
+File Name: Makefile 
+Date Created: 9/24/2024
+Description: This is the main location of the code for project 3. It implements the P, T, and R options.
 */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,6 +68,10 @@ void parseargs (int argc, char *argv []) {
             case 'p':
               cmd_line_flags |= ARG_P;
               port_number = optarg; 
+              if (port_number == NULL) {
+                fprintf(stderr, "error: -p option must be followed by a port number.\n"); 
+                exit(1); 
+              }
               break;
             case 't':
               cmd_line_flags |= ARG_T;
@@ -92,11 +82,12 @@ void parseargs (int argc, char *argv []) {
               root_directory = optarg; 
               break;
             case '?':
+                
                 usage(argv[0]);
-                return; // Exit after handling error
+                exit(1);  
             default:
                 usage(argv[0]);
-                return; // Exit after handling error
+                exit(1); 
         }
     }
 
@@ -108,7 +99,6 @@ int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
 
-   
     return 0; 
 }
 
