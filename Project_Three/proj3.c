@@ -163,6 +163,43 @@ void create_tcp_socket() {
     close (sd2);
 }
 
+/*
+– The request must start with a line of the form “METHOD ARGUMENT HTTP/VERSION”.
+– Each line in the request must be terminated by a carriage-return and linefeed (“\r\n”).
+– The HTTP request must end with a “blank” line that consists only of a carriage-return and
+linefeed (“\r\n”).
+– The HTTP request may contain additional, arbitrary header lines. These must be accepted, but
+will be ignored by your server.
+When a request arrives that does not conform to all of the above rules the web server will return
+a minimal response of “HTTP/1.1 400 Malformed Request\r\n\r\n” to the client. At this point all
+processing of the request is finished.
+*/
+void malformed_request_checked(char *req) {
+
+    bool is_valid_request = false; 
+    bool found_blank_line = false ; 
+
+    char *first_line = strtok(req, "\r\n"); 
+
+    if (first_line != NULL) {
+        if (strncmp(first_line, "GET ", 4) == 0 || strncmp(first_line, "SHUTDOWN ", 9) == 0){
+            is_valid_request = true; 
+        }
+            
+    }
+    char *carriage_check; 
+    while (carriage_check = strtok(req, "\r\n") != NULL) {
+        if (strlen(carriage_check) == 0) {
+            found_blank_line = true; 
+            break; //in case there is more which is ok 
+        }
+    }
+
+    if (is_valid_request == false || found_blank_line == false) {
+        fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
+        exit(1); 
+    }
+}
 
 int main(int argc, char *argv[]) {
 
