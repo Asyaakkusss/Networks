@@ -6,6 +6,7 @@ Date Created: 9/24/2024
 Description: This is the main location of the code for project 3. It implements the P, T, and R options.
 */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +31,7 @@ char *port_number = NULL;
 char *root_directory = NULL; 
 char *auth_token = NULL; 
 unsigned short cmd_line_flags = 0;
-char *REQUEST_BUFFER[REQ_BUF_LEN]; 
+char REQUEST_BUFFER[REQ_BUF_LEN]; 
 
 struct sockaddr_in sock_info;
 struct sockaddr addr;
@@ -108,6 +109,44 @@ void parseargs (int argc, char *argv []) {
     validateargs(argc, argv); 
 }
 
+/*
+– The request must start with a line of the form “METHOD ARGUMENT HTTP/VERSION”.
+– Each line in the request must be terminated by a carriage-return and linefeed (“\r\n”).
+– The HTTP request must end with a “blank” line that consists only of a carriage-return and
+linefeed (“\r\n”).
+– The HTTP request may contain additional, arbitrary header lines. These must be accepted, but
+will be ignored by your server.
+When a request arrives that does not conform to all of the above rules the web server will return
+a minimal response of “HTTP/1.1 400 Malformed Request\r\n\r\n” to the client. At this point all
+processing of the request is finished.
+*/
+void malformed_request_checker(char *req) {
+
+    bool *is_valid_request = false; 
+    bool *found_blank_line = false ; 
+
+    char *first_line = strtok(req, "\r\n"); 
+
+    if (first_line != NULL) {
+        if (strncmp(first_line, "GET ", 4) == 0 || strncmp(first_line, "SHUTDOWN ", 9) == 0){
+            *is_valid_request = true; 
+        }
+            
+    }
+    char *carriage_check = strtok(req, "\r\n"); 
+    while (carriage_check != NULL) {
+        if (strlen(carriage_check) == 0) {
+            *found_blank_line = true; 
+            break; //in case there is more which is ok 
+        }
+        carriage_check = strtok (NULL, "\r\n");
+    }
+
+    if (*is_valid_request == false || *found_blank_line == false) {
+        fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
+        exit(1); 
+    }
+}
 
 void create_tcp_socket() {
     
@@ -149,9 +188,12 @@ void create_tcp_socket() {
         exit(1); 
     }
     /* read information from sd2 to get the HTTP request */
-    memset(REQUEST_BUFFER, 0, REQ_BUF_LEN);  
-    bytes_read = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
+    //memset(REQUEST_BUFFER, 0, REQ_BUF_LEN);  
+    int bytes_read = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
     REQUEST_BUFFER[bytes_read] = '\0'; 
+
+    //check if request is malformed 
+    malformed_request_checker(REQUEST_BUFFER); 
 
     /* write message to the connection */
     //if (write (sd2,argv [MSG_POS],strlen (argv [MSG_POS])) < 0) {
@@ -161,44 +203,6 @@ void create_tcp_socket() {
     /* close connections and exit */
     close (sd);
     close (sd2);
-}
-
-/*
-– The request must start with a line of the form “METHOD ARGUMENT HTTP/VERSION”.
-– Each line in the request must be terminated by a carriage-return and linefeed (“\r\n”).
-– The HTTP request must end with a “blank” line that consists only of a carriage-return and
-linefeed (“\r\n”).
-– The HTTP request may contain additional, arbitrary header lines. These must be accepted, but
-will be ignored by your server.
-When a request arrives that does not conform to all of the above rules the web server will return
-a minimal response of “HTTP/1.1 400 Malformed Request\r\n\r\n” to the client. At this point all
-processing of the request is finished.
-*/
-void malformed_request_checked(char *req) {
-
-    bool is_valid_request = false; 
-    bool found_blank_line = false ; 
-
-    char *first_line = strtok(req, "\r\n"); 
-
-    if (first_line != NULL) {
-        if (strncmp(first_line, "GET ", 4) == 0 || strncmp(first_line, "SHUTDOWN ", 9) == 0){
-            is_valid_request = true; 
-        }
-            
-    }
-    char *carriage_check; 
-    while (carriage_check = strtok(req, "\r\n") != NULL) {
-        if (strlen(carriage_check) == 0) {
-            found_blank_line = true; 
-            break; //in case there is more which is ok 
-        }
-    }
-
-    if (is_valid_request == false || found_blank_line == false) {
-        fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
-        exit(1); 
-    }
 }
 
 int main(int argc, char *argv[]) {
