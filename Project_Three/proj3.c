@@ -148,6 +148,25 @@ void malformed_request_checker(char *req) {
     }
 }
 
+/*
+The last portion of the request line is “HTTP/VERSION”. The VERSION part of this string is
+immaterial for this project and therefore should be ignored. However, you must verify the “HTTP/”
+portion is present (case sensitive). If the requested protocol does not start with “HTTP/” then your web
+server must return a minimal HTTP response of “HTTP/1.1 501 Protocol Not Implemented\r\n\r\n”.
+At this point all processing of the request is finished
+*/
+void http_protocol_implementation_check(char *req) {
+    char *http_section = strstr(req, "HTTP"); 
+
+    if (strncmp(http_section, "HTTP", 4)) {
+        is_valid = true; 
+    }
+
+    if (is_valid == false) {
+        fprintf(stderr, “HTTP/1.1 501 Protocol Not Implemented\r\n\r\n”); 
+    }
+}
+
 void create_tcp_socket() {
     
     /* determine protocol */
