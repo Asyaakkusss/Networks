@@ -157,16 +157,75 @@ At this point all processing of the request is finished
 */
 void http_protocol_implementation_check(char *req) {
     char *http_section = strstr(req, "HTTP"); 
-
+    bool is_valid = false; 
     if (strncmp(http_section, "HTTP", 4)) {
         is_valid = true; 
     }
 
     if (is_valid == false) {
-        fprintf(stderr, “HTTP/1.1 501 Protocol Not Implemented\r\n\r\n”); 
+        fprintf(stderr, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n"); 
+        exit(1); 
     }
 }
 
+/*
+Your server will return “HTTP/1.1 405 Unsupported Method\r\n\r\n” if the METHOD portion of
+the request is not “GET” or “SHUTDOWN” (case sensitive)
+
+GET /not-there.txt HTTP/1.1\r\n\r\n
+*/
+
+void unsupported_method_checker(char *req) {
+    bool is_valid = false; 
+    if (strncmp(req, "GET ", 4) || strncmp(req, "SHUTDOWN ", 9)) {
+        is_valid = true; 
+    }
+
+    if (is_valid == false) {
+        fprintf(stderr, "HTTP/1.1 405 Unsupported Method\r\n\r\n"); 
+        exit(1); 
+    }
+}
+
+/*
+When the “SHUTDOWN” method is requested the “ARGUMENT” is used to authenticate the client.
+Your server will take one of the following two approaches:
+– When the ARGUMENT given in the HTTP request matches the argument given via the “-t”
+option the server will (i) send a minimal HTTP response of “HTTP/1.1 200 Server Shutting
+Down\r\n\r\n” and (ii) terminate. Case sensitive matching must be used.
+– When the ARGUMENT given in the HTTP request does not match the argument given via
+the “-t” option the server will (i) send a minimal HTTP response of “HTTP/1.1 403 Operation
+Forbidden\r\n\r\n” and (ii) continue running and accepting further connections and requests.
+Case sensitive matching must be used.
+
+./proj3 -p 1947 -t foobar -r ~/doc-root
+*/
+
+void server_shutdown(int socket) {
+    char *authorization_portion = strstr(REQUEST_BUFFER, "Authorization: "); 
+    int auth_token_len = strlen(auth_token); 
+
+    if (authorization_portion == NULL) {
+        write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", 37);
+        close(socket); 
+        exit(1); 
+    }
+
+    authorization_portion += 16; 
+
+    int similarity_comparison = strncmp(authorization_portion, auth_token, auth_token_len); 
+    //handle what happens when the argument is null or doesn't match argument given through -t option 
+    if (similarity_comparison != 0) {
+        write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", 37);
+        close(socket); 
+    }
+
+    if (similarity_comparison == 0) {
+        write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", 37); 
+        close(socket); 
+        exit(1); 
+    }
+}
 void create_tcp_socket() {
     
     /* determine protocol */
