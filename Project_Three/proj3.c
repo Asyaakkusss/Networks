@@ -340,11 +340,13 @@ void create_tcp_socket() {
 
     /* accept a connection */
     addrlen = sizeof (addr);
+
+    while(true) {
     sd2 = accept (sd,&addr,&addrlen);
     if (sd2 < 0) {
         fprintf(stderr, "error accepting connection.\n");
         exit(1); 
-    }
+        }
     /* read information from sd2 to get the HTTP request */
     //memset(REQUEST_BUFFER, 0, REQ_BUF_LEN);  
     int BYTES_READ = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
@@ -352,15 +354,21 @@ void create_tcp_socket() {
 
     //check if request is malformed 
     malformed_request_checker(REQUEST_BUFFER); 
+    http_protocol_implementation_check(REQUEST_BUFFER);
+    unsupported_method_checker(REQUEST_BUFFER);
+    if (strncmp(REQUEST_BUFFER, "GET ", 4) == 0) {
+                get_method_actions(sd2);
+        } 
+    else if (strncmp(REQUEST_BUFFER, "SHUTDOWN ", 9) == 0) {
+                server_shutdown(sd2);
+        }
 
-    /* write message to the connection */
-    //if (write (sd2,argv [MSG_POS],strlen (argv [MSG_POS])) < 0) {
-      //  fprintf("error writing message: %s", argv [MSG_POS]);
-   // }
+    //close client socket 
+    close (sd2); 
+    }
 
-    /* close connections and exit */
+    //close server socket 
     close (sd);
-    close (sd2);
 }
 
 int main(int argc, char *argv[]) {
