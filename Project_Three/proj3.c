@@ -38,6 +38,7 @@ struct sockaddr addr;
 struct protoent *protoinfo;
 unsigned int addrlen;
 int sd, sd2;
+int BYTES_READ; 
 
 #define MSG_POS 2
 #define ERROR 1
@@ -211,6 +212,7 @@ void server_shutdown(int socket) {
         exit(1); 
     }
 
+    //if not null, move authorization portion pointer 16 spaces to compare -t option with what the http request has 
     authorization_portion += 16; 
 
     int similarity_comparison = strncmp(authorization_portion, auth_token, auth_token_len); 
@@ -225,6 +227,84 @@ void server_shutdown(int socket) {
         close(socket); 
         exit(1); 
     }
+}
+
+/*
+When the “GET” method is requested, the “ARGUMENT” will be a filename relative to the “document
+root” directory given via the “-r” command-line argument. Your server will use one of these responses:
+1. When the requested file does not begin with a “/”, a minimal HTTP response of “HTTP/1.1 406
+Invalid Filename\r\n\r\n” must be returned.
+2. When the requested file exists, a minimal HTTP response header consisting of “HTTP/1.1 200
+OK\r\n\r\n” will be given, followed by the contents of the given file.
+3. When the requested file cannot be opened (e.g., because it does not exist), a minimal response
+header of “HTTP/1.1 404 File Not Found\r\n\r\n” will be returned (with no payload content).
+4. When the requested file is “/” the default file of “/index.html” will be used as the filename. The
+web server will then leverage either approach 2 or 3 above based on whether the file exists or not.
+Note: This only holds for “/” and not for other directories. E.g., “/foo/” should not return
+“/foo/index.html”. To simplify your web server, it explicitly does not need to deal with requests
+for directory names (except for “/”)
+*/
+
+void get_method_actions(int socket) {
+
+    //get path to file 
+    char *file_path_start = strstr(REQUEST_BUFFER, " ") + sizeof(unsigned char); 
+
+    char *file_path_end = strstr(REQUEST_BUFFER, "HTTP"); 
+    int path_length = file_path_end - file_path_start; 
+
+    char path_from_req[path_length];
+
+    strncpy(path_from_req, file_path_start, path_length);
+
+    path_from_req[path_length] = '\0'; 
+
+    //make sure first character is a /
+
+    if (path_from_req[0] != '/') {
+        write(socket, "HTTP/1.1 406 Invalid Filename\r\n\r\n", 33); 
+        close(socket); 
+        exit(1); 
+    }
+
+    //return contents of the file and minimal response header if the file begins with a / 
+    //in order to do this, we have to concatenate the root directory and the file 
+    char *full_url = malloc(strlen(path_from_req) + strlen(root_directory)); 
+
+    if (full_url == NULL) {
+        perror("Failed to allocate memory for full_url");
+        close(socket);
+        exit(1);
+    }
+
+    strcpy(full_url, root_directory); 
+
+    strcat(full_url, path_from_req); 
+
+    //if the file cannot be read, return the 404 error 
+    FILE *file = fopen(full_url, "rb"); 
+
+    if (file == NULL) {
+        write(socket, "HTTP/1.1 404 File Not Found\r\n\r\n", 32); 
+        close(socket); 
+    }
+    else {
+        write(socket, "HTTP/1.1 200 OK\r\n\r\n", 19); 
+
+        char buffer[BUFLEN]; 
+
+        while((BYTES_READ = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+            write(socket, buffer, BYTES_READ); 
+        }
+    fclose(file); 
+
+    free(full_url); 
+    close(socket); 
+
+    }
+
+    //handle the case of a file being just /
+
 }
 void create_tcp_socket() {
     
@@ -267,8 +347,8 @@ void create_tcp_socket() {
     }
     /* read information from sd2 to get the HTTP request */
     //memset(REQUEST_BUFFER, 0, REQ_BUF_LEN);  
-    int bytes_read = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
-    REQUEST_BUFFER[bytes_read] = '\0'; 
+    int BYTES_READ = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
+    REQUEST_BUFFER[BYTES_READ] = '\0'; 
 
     //check if request is malformed 
     malformed_request_checker(REQUEST_BUFFER); 
