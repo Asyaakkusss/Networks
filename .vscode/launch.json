@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
-      "args": [],
+      "args": ["-p", "8080", "-t", "secret", "-r", "/path/to/root"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/asyaakkus/Networks/Project_Three",

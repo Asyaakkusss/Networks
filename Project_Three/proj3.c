@@ -123,27 +123,27 @@ processing of the request is finished.
 */
 void malformed_request_checker(char *req) {
 
-    bool *is_valid_request = false; 
-    bool *found_blank_line = false ; 
+    bool is_valid_request = false; 
+    bool found_blank_line = false ; 
 
     char *first_line = strtok(req, "\r\n"); 
 
     if (first_line != NULL) {
         if (strncmp(first_line, "GET ", 4) == 0 || strncmp(first_line, "SHUTDOWN ", 9) == 0){
-            *is_valid_request = true; 
+            is_valid_request = true; 
         }
             
     }
     char *carriage_check = strtok(req, "\r\n"); 
     while (carriage_check != NULL) {
         if (strlen(carriage_check) == 0) {
-            *found_blank_line = true; 
+            found_blank_line = true; 
             break; //in case there is more which is ok 
         }
         carriage_check = strtok (NULL, "\r\n");
     }
 
-    if (*is_valid_request == false || *found_blank_line == false) {
+    if (is_valid_request == false || found_blank_line == false) {
         fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
         exit(1); 
     }
@@ -374,7 +374,6 @@ void create_tcp_socket() {
 int main(int argc, char *argv[]) {
 
     parseargs(argc,argv);
-
+    create_tcp_socket(); 
     return 0; 
 }
-
