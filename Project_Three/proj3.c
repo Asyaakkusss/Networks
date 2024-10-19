@@ -134,13 +134,12 @@ void malformed_request_checker(char *req) {
         }
             
     }
-    char *carriage_check = strtok(req, "\r\n"); 
-    while (carriage_check != NULL) {
-        if (strlen(carriage_check) == 0) {
+    while (first_line != NULL) {
+        char *line = strtok(NULL, "\r\n"); 
+        if (line != NULL && strlen(line) == 0) {
             found_blank_line = true; 
-            break; //in case there is more which is ok 
+            break; 
         }
-        carriage_check = strtok (NULL, "\r\n");
     }
 
     if (is_valid_request == false || found_blank_line == false) {
@@ -157,13 +156,8 @@ server must return a minimal HTTP response of “HTTP/1.1 501 Protocol Not Imple
 At this point all processing of the request is finished
 */
 void http_protocol_implementation_check(char *req) {
-    char *http_section = strstr(req, "HTTP"); 
-    bool is_valid = false; 
-    if (strncmp(http_section, "HTTP", 4)) {
-        is_valid = true; 
-    }
-
-    if (is_valid == false) {
+    char *http_section = strstr(req, "HTTP/"); 
+    if (http_section == NULL || strncmp(http_section, "HTTP/", 5) != 0) {
         fprintf(stderr, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n"); 
         exit(1); 
     }
@@ -178,7 +172,7 @@ GET /not-there.txt HTTP/1.1\r\n\r\n
 
 void unsupported_method_checker(char *req) {
     bool is_valid = false; 
-    if (strncmp(req, "GET ", 4) || strncmp(req, "SHUTDOWN ", 9)) {
+    if (strncmp(req, "GET ", 4) || strncmp(req, "SHUTDOWN ", 9) == 0) {
         is_valid = true; 
     }
 
@@ -201,34 +195,32 @@ Case sensitive matching must be used.
 
 ./proj3 -p 1947 -t foobar -r ~/doc-root
 */
-
 void server_shutdown(int socket) {
-    char *authorization_portion = strstr(REQUEST_BUFFER, "Authorization: "); 
-    int auth_token_len = strlen(auth_token); 
-
-    if (authorization_portion == NULL) {
-        write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", 37);
-        close(socket); 
-        exit(1); 
+    // Extract the request method and argument (for example: "SHUTDOWN foobar")
+    char *shutdown_cmd = "SHUTDOWN ";
+    int cmd_len = strlen(shutdown_cmd);
+    
+    // Check if the request starts with "SHUTDOWN "
+    if (strncmp(REQUEST_BUFFER, shutdown_cmd, cmd_len) != 0) {
+        // If the method isn't SHUTDOWN, return
+        return;
     }
 
-    //if not null, move authorization portion pointer 16 spaces to compare -t option with what the http request has 
-    authorization_portion += 16; 
+    // Extract the argument from the request line (e.g., "SHUTDOWN foobar" -> "foobar")
+    char *argument = REQUEST_BUFFER + cmd_len;
 
-    int similarity_comparison = strncmp(authorization_portion, auth_token, auth_token_len); 
-    //handle what happens when the argument is null or doesn't match argument given through -t option 
-    if (similarity_comparison != 0) {
+    // Compare the extracted argument with the provided auth_token
+    if (strncmp(argument, auth_token, strlen(auth_token)) == 0) {
+        // If they match, send the 200 response and shut down
+        write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", 37);
+        close(socket); 
+        exit(0);  // Terminate the server
+    } else {
+        // If they don't match, send the 403 Forbidden response and continue
         write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", 37);
         close(socket); 
-    }
-
-    if (similarity_comparison == 0) {
-        write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", 37); 
-        close(socket); 
-        exit(1); 
     }
 }
-
 /*
 When the “GET” method is requested, the “ARGUMENT” will be a filename relative to the “document
 root” directory given via the “-r” command-line argument. Your server will use one of these responses:
