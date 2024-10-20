@@ -135,11 +135,11 @@ void malformed_request_checker(char *req) {
             
     }
     while (first_line != NULL) {
-        char *line = strtok(NULL, "\r\n"); 
-        if (line != NULL && strlen(line) == 0) {
+        if (first_line != NULL && strlen(first_line) == 0) {
             found_blank_line = true; 
             break; 
         }
+        first_line = strtok(NULL, "\r\n"); 
     }
 
     if (is_valid_request == false || found_blank_line == false) {
@@ -355,7 +355,7 @@ void create_tcp_socket() {
         fprintf(stderr, "error accepting connection.\n");
         exit(1); 
         }
-        
+
     printf("sd2 has been initialized successfully\n"); 
 
     /* read information from sd2 to get the HTTP request */
