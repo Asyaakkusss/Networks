@@ -121,46 +121,34 @@ When a request arrives that does not conform to all of the above rules the web s
 a minimal response of “HTTP/1.1 400 Malformed Request\r\n\r\n” to the client. At this point all
 processing of the request is finished.
 */
-
 void malformed_request_checker(char *req) {
 
     bool is_valid_request = false; 
-    bool found_blank_line = false; 
+    bool found_blank_line = false ; 
 
-    // Create a copy of the request to avoid modifying the original input string
-    char *req_copy = strdup(req);
-    if (!req_copy) {
-        perror("strdup");
-        exit(1);
+    char *first_line = strtok(req, "\r\n"); 
+
+    if (first_line != NULL) {
+        if (strncmp(first_line, "GET ", 4) == 0 || strncmp(first_line, "SHUTDOWN ", 9) == 0){
+            is_valid_request = true; 
+        }
+            
     }
+    while (first_line != NULL) {
+        first_line = strtok(NULL, "\r\n"); 
 
-    char *line = strtok(req_copy, "\r\n"); // Get the first line
-
-    // Check if the first line contains a valid request method
-    if (line != NULL) {
-        if (strncmp(line, "GET ", 4) == 0 || strncmp(line, "SHUTDOWN ", 9) == 0) {
-            is_valid_request = true;
+        if (first_line != NULL && strlen(first_line) == 0) {
+            found_blank_line = true; 
+            break; 
         }
     }
 
-    // Iterate through the remaining lines to find the blank line
-    while ((line = strtok(NULL, "\r\n")) != NULL) {
-        // A blank line in HTTP is just "\r\n", which strtok would treat as an empty string
-        if (strlen(line) == 0) {
-            found_blank_line = true;
-            break;
-        }
-    }
-
-    // Free the duplicate buffer
-    free(req_copy);
-
-    // If either the request is invalid or the blank line wasn't found, print error and exit
-    if (!is_valid_request || !found_blank_line) {
+    if (is_valid_request == false || found_blank_line == false) {
         fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
         exit(1); 
     }
 }
+
 /*
 The last portion of the request line is “HTTP/VERSION”. The VERSION part of this string is
 immaterial for this project and therefore should be ignored. However, you must verify the “HTTP/”
@@ -185,7 +173,7 @@ GET /not-there.txt HTTP/1.1\r\n\r\n
 
 void unsupported_method_checker(char *req) {
     bool is_valid = false; 
-    if (strncmp(req, "GET ", 4) == 0 || strncmp(req, "SHUTDOWN ", 9) == 0) {
+    if (strncmp(req, "GET ", 4) || strncmp(req, "SHUTDOWN ", 9) == 0) {
         is_valid = true; 
     }
 
@@ -249,22 +237,21 @@ Note: This only holds for “/” and not for other directories. E.g., “/foo/�
 “/foo/index.html”. To simplify your web server, it explicitly does not need to deal with requests
 for directory names (except for “/”)
 */
-
+//"GET /5.txt HTTP/1.1\r\n\r\n"
 void get_method_actions(int socket) {
 
     //get path to file 
     char *file_path_start = strstr(REQUEST_BUFFER, " ") + sizeof(unsigned char); 
-    printf("file path start %s\n", file_path_start); 
-    char *file_path_end = strstr(REQUEST_BUFFER, " HTTP");
-    printf("file path end %s\n", file_path_end);  
+
+    char *file_path_end = strstr(REQUEST_BUFFER, "HTTP"); 
     int path_length = file_path_end - file_path_start; 
-    printf("path length %i\n", path_length); 
+
     char path_from_req[path_length];
 
     strncpy(path_from_req, file_path_start, path_length);
 
     path_from_req[path_length] = '\0'; 
-    printf("this is the buffer holding the file path %s\n", path_from_req); 
+
     //make sure first character is a /
 
     if (path_from_req[0] != '/') {
@@ -375,11 +362,10 @@ void create_tcp_socket() {
     /* read information from sd2 to get the HTTP request */
     //memset(REQUEST_BUFFER, 0, REQ_BUF_LEN);  
     int BYTES_READ = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
-    REQUEST_BUFFER[BYTES_READ + 1] = '\0'; 
-    printf("request buffer is: %s\n", REQUEST_BUFFER); 
-    printf("bytes read is: %i\n", BYTES_READ); 
+    REQUEST_BUFFER[BYTES_READ] = '\0'; 
+
     //check if request is malformed 
-    //malformed_request_checker(REQUEST_BUFFER); 
+    malformed_request_checker(REQUEST_BUFFER); 
     http_protocol_implementation_check(REQUEST_BUFFER);
     unsupported_method_checker(REQUEST_BUFFER);
     if (strncmp(REQUEST_BUFFER, "GET ", 4) == 0) {
