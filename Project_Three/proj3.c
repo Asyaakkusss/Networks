@@ -26,6 +26,7 @@ Description: This is the main location of the code for project 3. It implements 
 #define ARG_T  0x2  //2
 #define ARG_R  0x4  //4
 #define REQ_BUF_LEN 1024
+#define MALFORMED_FILE_LEN 50
 
 char *port_number = NULL; 
 char *root_directory = NULL; 
@@ -124,8 +125,8 @@ processing of the request is finished.
 
 void malformed_request_checker(char *req) {
 
-    bool is_valid_request = false; 
-    bool found_blank_line = false; 
+   bool is_valid_request = false;
+    bool found_blank_line = false;
 
     // Create a copy of the request to avoid modifying the original input string
     char *req_copy = strdup(req);
@@ -134,31 +135,44 @@ void malformed_request_checker(char *req) {
         exit(1);
     }
 
-    char *line = strtok(req_copy, "\r\n"); // Get the first line
+    // Open a temporary file to store the request and use fgets on it
+    FILE *temp_file = tmpfile();  // Create a temporary file
+    if (!temp_file) {
+        perror("tmpfile");
+        exit(1);
+    }
 
-    // Check if the first line contains a valid request method
-    if (line != NULL) {
+    // Write the request into the temporary file
+    fwrite(req_copy, sizeof(char), strlen(req_copy), temp_file);
+    rewind(temp_file);  // Reset file pointer to the start of the file
+
+    // Use fgets() to read one line at a time
+    char line[MALFORMED_FILE_LEN];
+
+    // Check the first line for valid HTTP request method
+    if (fgets(line, sizeof(line), temp_file)) {
         if (strncmp(line, "GET ", 4) == 0 || strncmp(line, "SHUTDOWN ", 9) == 0) {
             is_valid_request = true;
         }
     }
 
-    // Iterate through the remaining lines to find the blank line
-    while ((line = strtok(NULL, "\r\n")) != NULL) {
-        // A blank line in HTTP is just "\r\n", which strtok would treat as an empty string
-        if (strlen(line) == 0) {
+    // Iterate through the remaining lines to find the blank line (\r\n)
+    while (fgets(line, sizeof(line), temp_file)) {
+        // A blank line in HTTP headers is "\r\n", so fgets will return "\r\n" or just "\n"
+        if (strcmp(line, "\r\n") == 0 || strcmp(line, "\n") == 0) {
             found_blank_line = true;
             break;
         }
     }
 
-    // Free the duplicate buffer
+    // Close the temporary file and free the request copy
+    fclose(temp_file);
     free(req_copy);
 
     // If either the request is invalid or the blank line wasn't found, print error and exit
     if (!is_valid_request || !found_blank_line) {
-        fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
-        exit(1); 
+        fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n");
+        exit(1);
     }
 }
 /*
