@@ -292,17 +292,13 @@ void get_method_actions(int socket) {
 
     //get path to file 
     char *file_path_start = strstr(REQUEST_BUFFER, " ") + sizeof(unsigned char); 
-    printf("file path start %s\n", file_path_start); 
     char *file_path_end = strstr(REQUEST_BUFFER, " HTTP");
-    printf("file path end %s\n", file_path_end);  
     int path_length = file_path_end - file_path_start; 
-    printf("path length %i\n", path_length); 
     char path_from_req[path_length];
 
     strncpy(path_from_req, file_path_start, path_length);
 
     path_from_req[path_length] = '\0'; 
-    printf("this is the buffer holding the file path %s\n", path_from_req); 
     //make sure first character is a /
 
     if (path_from_req[0] != '/') {
@@ -357,23 +353,17 @@ void get_method_actions(int socket) {
 }
 void create_tcp_socket() {
 
-    printf("entered the create tcp socket connection\n"); 
-
     /* determine protocol */
     if ((protoinfo = getprotobyname (PROTOCOL)) == NULL) {
         fprintf(stderr, "cannot find protocol information for.%s\n", PROTOCOL);
         exit(1); 
     }
 
-    printf("protocol determined %s\n", PROTOCOL); 
-
     /* setup endpoint info */
     memset ((char *)&sock_info,0x0,sizeof (sock_info));
     sock_info.sin_family = AF_INET;
     sock_info.sin_addr.s_addr = INADDR_ANY;
     sock_info.sin_port = htons ((u_short) atoi (port_number));
-
-    printf("socket endpoint information determined\n"); 
 
     /* allocate a socket */
     /*   would be SOCK_DGRAM for UDP */
@@ -383,15 +373,11 @@ void create_tcp_socket() {
         exit(1); 
     }
 
-    printf("socket sd has been created%i\n", sd); 
-
     /* bind the socket */
     if (bind (sd, (struct sockaddr *)&sock_info, sizeof(sock_info)) < 0) {
         fprintf(stderr, "cannot bind to port %s", port_number);
         exit(1); 
     }
-
-    printf("socket sd has been bound\n"); 
 
     /* listen for incoming connections */
     if (listen (sd, QLEN) < 0) {
@@ -399,12 +385,8 @@ void create_tcp_socket() {
         exit(1); 
     }
 
-    printf("listening for incoming connections\n"); 
-
     /* accept a connection */
     addrlen = sizeof (addr);
-
-    printf("connection has been accepted\n"); 
 
     while(true) {
     sd2 = accept (sd,&addr,&addrlen);
@@ -413,13 +395,10 @@ void create_tcp_socket() {
         exit(1); 
         }
 
-    printf("sd2 has been initialized successfully\n"); 
-
     /* read information from sd2 to get the HTTP request */ 
     int BYTES_READ = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
     REQUEST_BUFFER[BYTES_READ + 1] = '\0'; 
-    printf("request buffer is: %s\n", REQUEST_BUFFER); 
-    printf("bytes read is: %i\n", BYTES_READ); 
+
     //check if request is malformed 
     malformed_request_checker(sd2); 
     http_protocol_implementation_check(sd2);
