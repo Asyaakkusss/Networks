@@ -209,27 +209,37 @@ Case sensitive matching must be used.
 ./proj3 -p 1947 -t foobar -r ~/doc-root
 */
 void server_shutdown(int socket) {
-    // Extract the request method and argument (for example: "SHUTDOWN foobar")
+   // Sample shutdown command prefix
     char *shutdown_cmd = "SHUTDOWN ";
     int cmd_len = strlen(shutdown_cmd);
-    
+
     // Check if the request starts with "SHUTDOWN "
     if (strncmp(REQUEST_BUFFER, shutdown_cmd, cmd_len) != 0) {
         // If the method isn't SHUTDOWN, return
         return;
     }
 
-    // Extract the argument from the request line (e.g., "SHUTDOWN foobar" -> "foobar")
-    char *argument = REQUEST_BUFFER + cmd_len;
+    // Extract the argument from the request (e.g., "SHUTDOWN /small.txt HTTP/1.1\r\n\r\n")
+    char *argument_start = REQUEST_BUFFER + cmd_len;
+    
+    // Find the space before "HTTP/1.1" to get the end of the argument
+    char *argument_end = strstr(argument_start, " HTTP/1.1");
+
+    if (argument_end == NULL) {
+        write(socket, "HTTP/1.1 400 Bad Request\r\n\r\n", 29);
+        close(socket);
+        return;
+    }
+
+    // Calculate the length of the argument
+    int argument_len = argument_end - argument_start;
 
     // Compare the extracted argument with the provided auth_token
-    if (strncmp(argument, auth_token, strlen(auth_token)) == 0) {
-        // If they match, send the 200 response and shut down
+    if (strncmp(argument_start, auth_token, argument_len) == 0 && strlen(auth_token) == argument_len) {
         write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", 37);
         close(socket); 
-        exit(0);  // Terminate the server
+        exit(0); 
     } else {
-        // If they don't match, send the 403 Forbidden response and continue
         write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", 37);
         close(socket); 
     }
