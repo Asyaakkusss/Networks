@@ -247,7 +247,7 @@ void server_shutdown(int socket) {
     if (argument_end == NULL) {
         write(socket, "HTTP/1.1 400 Bad Request\r\n\r\n", BAD_REQ_LEN);
         close(socket);
-        return;
+        exit(1); 
     }
 
     // Calculate the length of the argument
@@ -257,7 +257,7 @@ void server_shutdown(int socket) {
     if (strncmp(argument_start, auth_token, argument_len) == 0 && strlen(auth_token) == argument_len) {
         write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", SERVER_ERR_LEN);
         close(socket); 
-        exit(0); 
+        exit(1); 
     } else {
         write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", SERVER_ERR_LEN);
         close(socket); 
@@ -327,6 +327,7 @@ void get_method_actions(int socket) {
     if (file == NULL) {
         write(socket, "HTTP/1.1 404 File Not Found\r\n\r\n", FILE_NOT_FOUND_LEN); 
         close(socket); 
+        exit(1); 
     }
     else {
         write(socket, "HTTP/1.1 200 OK\r\n\r\n", OK_LEN); 
@@ -335,6 +336,7 @@ void get_method_actions(int socket) {
 
         while((BYTES_READ = fread(buffer, sizeof(unsigned char), sizeof(buffer), file)) > 0) {
             write(socket, buffer, BYTES_READ); 
+        exit(1); 
         }
     fclose(file); 
 
