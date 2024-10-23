@@ -45,6 +45,15 @@ int BYTES_READ;
 #define QLEN 1
 #define PROTOCOL "tcp"
 #define BUFLEN 1024
+#define GET_LEN 4
+#define SHUTDOWN_LEN 9 
+#define ERROR_LENS 35
+#define PROTOCOL_LEN 5
+#define FILE_NOT_FOUND_LEN 32
+#define FILENAME_BAD 33
+#define SERVER_ERR_LEN 37
+#define BAD_REQ_LEN 29
+#define OK_LEN 19
 
 
 void usage (char *progname) {
@@ -122,13 +131,13 @@ a minimal response of “HTTP/1.1 400 Malformed Request\r\n\r\n” to the client
 processing of the request is finished.
 */
 
-void malformed_request_checker(char *req) {
+void malformed_request_checker(int socket) {
 
     bool is_valid_request = false; 
     bool found_blank_line = false; 
 
     // Create a copy of the request to avoid modifying the original input string
-    char *req_copy = strdup(req);
+    char *req_copy = strdup(REQUEST_BUFFER);
     if (!req_copy) {
         perror("strdup");
         exit(1);
@@ -138,7 +147,7 @@ void malformed_request_checker(char *req) {
 
     // Check if the first line contains a valid request method
     if (line != NULL) {
-        if (strncmp(line, "GET ", 4) == 0 || strncmp(line, "SHUTDOWN ", 9) == 0) {
+        if (strncmp(line, "GET ", GET_LEN) == 0 || strncmp(line, "SHUTDOWN ", SHUTDOWN_LEN) == 0) {
             is_valid_request = true;
         }
     }
@@ -157,7 +166,7 @@ void malformed_request_checker(char *req) {
 
     // If either the request is invalid or the blank line wasn't found, print error and exit
     if (!is_valid_request || !found_blank_line) {
-        fprintf(stderr, "HTTP/1.1 400 Malformed Request\r\n\r\n"); 
+        write(socket, "HTTP/1.1 400 Malformed Request\r\n\r\n", ERROR_LENS);
         exit(1); 
     }
 }
@@ -168,10 +177,10 @@ portion is present (case sensitive). If the requested protocol does not start wi
 server must return a minimal HTTP response of “HTTP/1.1 501 Protocol Not Implemented\r\n\r\n”.
 At this point all processing of the request is finished
 */
-void http_protocol_implementation_check(char *req) {
-    char *http_section = strstr(req, "HTTP/"); 
-    if (http_section == NULL || strncmp(http_section, "HTTP/", 5) != 0) {
-        fprintf(stderr, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n"); 
+void http_protocol_implementation_check(int socket) {
+    char *http_section = strstr(REQUEST_BUFFER, "HTTP/"); 
+    if (http_section == NULL || strncmp(http_section, "HTTP/", PROTOCOL_LEN) != 0) {
+        write(socket, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n", ERROR_LENS); 
         exit(1); 
     }
 }
@@ -182,16 +191,15 @@ the request is not “GET” or “SHUTDOWN” (case sensitive)
 
 GET /not-there.txt HTTP/1.1\r\n\r\n
 */
-
-void unsupported_method_checker(char *req) {
+void unsupported_method_checker(int socket) {
     bool is_valid = false; 
-    if (strncmp(req, "GET ", 4) == 0 || strncmp(req, "SHUTDOWN ", 9) == 0) {
+    if (strncmp(REQUEST_BUFFER, "GET ", GET_LEN) == 0 || strncmp(REQUEST_BUFFER, "SHUTDOWN ", SHUTDOWN_LEN) == 0) {
         is_valid = true; 
     }
 
     if (is_valid == false) {
-        fprintf(stderr, "HTTP/1.1 405 Unsupported Method\r\n\r\n"); 
-        exit(1); 
+        write(socket, "HTTP/1.1 405 Unsupported Method\r\n\r\n", ERROR_LENS); 
+        exit(1);    
     }
 }
 
@@ -226,7 +234,7 @@ void server_shutdown(int socket) {
     char *argument_end = strstr(argument_start, " HTTP/1.1");
 
     if (argument_end == NULL) {
-        write(socket, "HTTP/1.1 400 Bad Request\r\n\r\n", 29);
+        write(socket, "HTTP/1.1 400 Bad Request\r\n\r\n", BAD_REQ_LEN);
         close(socket);
         return;
     }
@@ -236,11 +244,11 @@ void server_shutdown(int socket) {
 
     // Compare the extracted argument with the provided auth_token
     if (strncmp(argument_start, auth_token, argument_len) == 0 && strlen(auth_token) == argument_len) {
-        write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", 37);
+        write(socket, "HTTP/1.1 200 Server Shutting Down\r\n\r\n", SERVER_ERR_LEN);
         close(socket); 
         exit(0); 
     } else {
-        write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", 37);
+        write(socket, "HTTP/1.1 403 Operation Forbidden\r\n\r\n", SERVER_ERR_LEN);
         close(socket); 
     }
 }
@@ -278,7 +286,7 @@ void get_method_actions(int socket) {
     //make sure first character is a /
 
     if (path_from_req[0] != '/') {
-        write(socket, "HTTP/1.1 406 Invalid Filename\r\n\r\n", 33); 
+        write(socket, "HTTP/1.1 406 Invalid Filename\r\n\r\n", FILENAME_BAD); 
         close(socket); 
         exit(1); 
     }
@@ -301,15 +309,15 @@ void get_method_actions(int socket) {
     FILE *file = fopen(full_url, "rb"); 
 
     if (file == NULL) {
-        write(socket, "HTTP/1.1 404 File Not Found\r\n\r\n", 32); 
+        write(socket, "HTTP/1.1 404 File Not Found\r\n\r\n", FILE_NOT_FOUND_LEN); 
         close(socket); 
     }
     else {
-        write(socket, "HTTP/1.1 200 OK\r\n\r\n", 19); 
+        write(socket, "HTTP/1.1 200 OK\r\n\r\n", OK_LEN); 
 
         char buffer[BUFLEN]; 
 
-        while((BYTES_READ = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        while((BYTES_READ = fread(buffer, sizeof(unsigned char), sizeof(buffer), file)) > 0) {
             write(socket, buffer, BYTES_READ); 
         }
     fclose(file); 
@@ -382,20 +390,19 @@ void create_tcp_socket() {
 
     printf("sd2 has been initialized successfully\n"); 
 
-    /* read information from sd2 to get the HTTP request */
-    //memset(REQUEST_BUFFER, 0, REQ_BUF_LEN);  
+    /* read information from sd2 to get the HTTP request */ 
     int BYTES_READ = read(sd2, REQUEST_BUFFER, REQ_BUF_LEN - sizeof(unsigned char)); 
     REQUEST_BUFFER[BYTES_READ + 1] = '\0'; 
     printf("request buffer is: %s\n", REQUEST_BUFFER); 
     printf("bytes read is: %i\n", BYTES_READ); 
     //check if request is malformed 
-    //malformed_request_checker(REQUEST_BUFFER); 
-    http_protocol_implementation_check(REQUEST_BUFFER);
-    unsupported_method_checker(REQUEST_BUFFER);
-    if (strncmp(REQUEST_BUFFER, "GET ", 4) == 0) {
+    malformed_request_checker(sd2); 
+    http_protocol_implementation_check(sd2);
+    unsupported_method_checker(sd2);
+    if (strncmp(REQUEST_BUFFER, "GET ", GET_LEN) == 0) {
                 get_method_actions(sd2);
         } 
-    else if (strncmp(REQUEST_BUFFER, "SHUTDOWN ", 9) == 0) {
+    else if (strncmp(REQUEST_BUFFER, "SHUTDOWN ", SHUTDOWN_LEN) == 0) {
                 server_shutdown(sd2);
         }
 
