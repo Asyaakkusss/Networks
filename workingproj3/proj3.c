@@ -189,10 +189,19 @@ server must return a minimal HTTP response of “HTTP/1.1 501 Protocol Not Imple
 At this point all processing of the request is finished
 */
 void http_protocol_implementation_check(int socket) {
-    //char *http_section = strstr(REQUEST_BUFFER, "HTTP/"); 
-    if (REQUEST_BUFFER == NULL || strncmp(REQUEST_BUFFER, "HTTP/", PROTOCOL_LEN) != 0) {
+    
+    char *http_section = strstr(REQUEST_BUFFER, " HTTP/"); 
+    
+    if (http_section == NULL) {
         write(socket, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n", PROT_NO_IMPLEMENT_LEN); 
-        exit(1); 
+        close(socket);  
+        exit(1);    
+    }
+
+    if (strncmp(http_section, " HTTP/", PROTOCOL_LEN) != 0) {
+        write(socket, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n", PROT_NO_IMPLEMENT_LEN); 
+        close(socket);  
+        exit(1);   
     }
 }
 
