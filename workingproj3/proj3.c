@@ -48,12 +48,15 @@ int BYTES_READ;
 #define GET_LEN 4
 #define SHUTDOWN_LEN 9 
 #define ERROR_LENS 35
+#define PROT_NO_IMPLEMENT_LEN 41
 #define PROTOCOL_LEN 5
-#define FILE_NOT_FOUND_LEN 32
+#define FILE_NOT_FOUND_LEN 31
 #define FILENAME_BAD 33
 #define SERVER_ERR_LEN 37
 #define BAD_REQ_LEN 29
 #define OK_LEN 19
+#define MALFORMED_FILE_LEN 50
+
 
 
 void usage (char *progname) {
@@ -133,8 +136,7 @@ processing of the request is finished.
 
 void malformed_request_checker(int socket) {
 
-    bool is_valid_request = false; 
-    bool found_blank_line = false; 
+    bool found_blank_line = false;
 
     // Create a copy of the request to avoid modifying the original input string
     char *req_copy = strdup(REQUEST_BUFFER);
@@ -143,31 +145,40 @@ void malformed_request_checker(int socket) {
         exit(1);
     }
 
-    char *line = strtok(req_copy, "\r\n"); // Get the first line
-
-    // Check if the first line contains a valid request method
-    if (line != NULL) {
-        if (strncmp(line, "GET ", GET_LEN) == 0 || strncmp(line, "SHUTDOWN ", SHUTDOWN_LEN) == 0) {
-            is_valid_request = true;
-        }
+    // Open a temporary file to store the request and use fgets on it
+    FILE *temp_file = tmpfile();  // Create a temporary file
+    if (!temp_file) {
+        perror("tmpfile");
+        exit(1);
     }
 
-    // Iterate through the remaining lines to find the blank line
-    while ((line = strtok(NULL, "\r\n")) != NULL) {
-        // A blank line in HTTP is just "\r\n", which strtok would treat as an empty string
-        if (strlen(line) == 0) {
+    // Write the request into the temporary file
+    fwrite(req_copy, sizeof(char), strlen(req_copy), temp_file);
+
+    // Reset file pointer to the start of the file
+    rewind(temp_file);  
+
+    // Use fgets() to read one line at a time
+    char line[MALFORMED_FILE_LEN];
+
+
+    // Iterate through the remaining lines to find the blank line (\r\n)
+    while (fgets(line, sizeof(line), temp_file)) {
+        // A blank line in HTTP headers is "\r\n", so fgets will return "\r\n"
+        if (strcmp(line, "\r\n") == 0) {
             found_blank_line = true;
             break;
         }
     }
 
-    // Free the duplicate buffer
+    // Close the temporary file and free the request copy
+    fclose(temp_file);
     free(req_copy);
 
     // If either the request is invalid or the blank line wasn't found, print error and exit
-    if (!is_valid_request || !found_blank_line) {
-        write(socket, "HTTP/1.1 400 Malformed Request\r\n\r\n", ERROR_LENS);
-        exit(1); 
+    if (!found_blank_line) {
+        write(socket, "HTTP/1.1 400 Malformed Request\r\n\r\n", ERROR_LENS); 
+        exit(1);
     }
 }
 /*
@@ -178,9 +189,9 @@ server must return a minimal HTTP response of “HTTP/1.1 501 Protocol Not Imple
 At this point all processing of the request is finished
 */
 void http_protocol_implementation_check(int socket) {
-    char *http_section = strstr(REQUEST_BUFFER, "HTTP/"); 
-    if (http_section == NULL || strncmp(http_section, "HTTP/", PROTOCOL_LEN) != 0) {
-        write(socket, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n", ERROR_LENS); 
+    //char *http_section = strstr(REQUEST_BUFFER, "HTTP/"); 
+    if (REQUEST_BUFFER == NULL || strncmp(REQUEST_BUFFER, "HTTP/", PROTOCOL_LEN) != 0) {
+        write(socket, "HTTP/1.1 501 Protocol Not Implemented\r\n\r\n", PROT_NO_IMPLEMENT_LEN); 
         exit(1); 
     }
 }
@@ -291,6 +302,11 @@ void get_method_actions(int socket) {
         exit(1); 
     }
 
+    // If the path is "/", use "/index.html"
+    if (strcmp(path_from_req, "/") == 0) {
+        strcpy(path_from_req, "/index.html");
+    }
+
     //return contents of the file and minimal response header if the file begins with a / 
     //in order to do this, we have to concatenate the root directory and the file 
     char *full_url = malloc(strlen(path_from_req) + strlen(root_directory)); 
@@ -326,8 +342,6 @@ void get_method_actions(int socket) {
     close(socket); 
 
     }
-
-    //handle the case of a file being just /
 
 }
 void create_tcp_socket() {

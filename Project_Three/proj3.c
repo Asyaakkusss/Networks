@@ -125,7 +125,7 @@ processing of the request is finished.
 
 void malformed_request_checker(char *req) {
 
-   bool is_valid_request = false;
+    bool is_valid_request = false;
     bool found_blank_line = false;
 
     // Create a copy of the request to avoid modifying the original input string
