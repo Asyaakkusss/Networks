@@ -3,3 +3,23 @@
 #File Name: Makefile 
 #Date Created: 10/28/2024
 #Description: This is the makefile for proj4
+
+CC=gcc
+CXX=g++
+LD=gcc
+CFLAGS=-Wall -Werror -g
+LDFLAGS=
+
+TARGETS=proj4
+
+all: $(TARGETS)
+
+# Define the proj1 target
+proj1: proj4.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+clean:
+	rm -f *.o $(TARGETS)
+
+distclean: clean
+	rm -f $(TARGETS)
