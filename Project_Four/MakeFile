@@ -15,7 +15,7 @@ TARGETS=proj4
 all: $(TARGETS)
 
 # Define the proj1 target
-proj1: proj4.c
+proj1: proj4.c next.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
