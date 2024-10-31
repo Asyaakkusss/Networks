@@ -200,7 +200,6 @@ trace1.dmp 1103112609.132870 0.002484 4 3
 */
 
 void i_option() {
-    printf("%s", trace_file); 
     FILE *f = fopen(trace_file, "rb"); 
     
     if (f == NULL) {
@@ -234,14 +233,16 @@ void i_option() {
     double trace_duration = last_time - first_time;
 
     // Print the results in the specified format
-    printf("%.6f %.6f %d %d\n", first_time, trace_duration, total_pkts, ip_pkts);
+    printf("%s %.6f %.6f %d %d\n", trace_file, first_time, trace_duration, total_pkts, ip_pkts);
 
     fclose(f);
 }
 
 int main(int argc, char *argv[]) {
     parseargs(argc, argv);
-    return 0;
 
-    if ()
+    if (cmd_line_flags == ARG_R+ARG_I) {
+        i_option(); 
+    }
+    return 0; 
 }
