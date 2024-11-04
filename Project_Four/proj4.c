@@ -300,6 +300,7 @@ Sample output:
 1103112610.465345 34 1000 20 T - -
 1103112615.436115 43 308 24 U 8 276
 1103112618.029221 20 - - - - -
+1431329876.000005 54 40 20 T 20 0
 */
 void s_option() {
     FILE *f = fopen(trace_file, "rb"); 
@@ -319,11 +320,12 @@ void s_option() {
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             double ts = pinfo.now; //ts (this is wrong)
             int ip_len = ntohs(pinfo.iph->tot_len); //ip_len
+            int iphl = pinfo.iph->ihl; //iphl
             int caplen = pinfo.caplen; //caplen
             if (pinfo.tcph != NULL) {
                 strcpy(transport, "T"); //transport 
             }
-            printf("%.6f %i %i %s \n", ts, caplen, ip_len, transport); 
+            printf("%.6f %i %i %i %s \n", ts, caplen, ip_len, iphl, transport); 
             ip_pkts++; 
         }
         else {
