@@ -238,11 +238,88 @@ void i_option() {
     fclose(f);
 }
 
+/*
+When your program is invoked with the “-s” option, it will operate in “size” mode. In this mode, you will
+print length information about each IPv4 packet in the packet trace file. That is, if the Ethernet type field
+indicates a packet is not an IPv4 packet, you must ignore it. Likewise, if the Ethernet header is not present
+in the packet trace you will ignore the packet. Each packet will yield a single line of output in this format:
+ts caplen ip_len iphl transport trans_hl payload_len
+The fields are defined as follows:
+• ts: This field is the timestamp of the packet, which is included with the packet’s meta information
+(see packet trace format document). Print this as a decimal number to 6 decimal places of precision.
+• caplen: This is the number of bytes from the original packet that have been “captured” in the packet
+trace. This value is included with the packet’s meta information. This value must be printed as an
+unpadded decimal number.
+• ip len: This is the total length (in bytes) of the IPv4 packet (from the total length field in the IPv4
+header). This should be printed as an unpadded decimal number.
+If the IPv4 header is not included in the packet trace file, you must print a singe dash (“-”) for this
+field.
+• iphl: This is the total length (in bytes) of the IPv4 header—which can be determined from the IPv4
+header.
+As with the ip len field, if the IPv4 header is not present in the packet trace, this field will be printed
+as a “-”.
+• transport: This indicates the transport protocol in use for this packet. A field in the IPv4 header
+will indicate which transport is in use. This field should be printed as a “U” for UDP packets and a
+“T” for TCP packets. For all other protocols, this value will be a question mark (“?”).
+This value will be a “-” if the IPv4 header is not included in the packet trace.
+• trans hl: This is the total number of bytes occupied by the TCP or UDP header written as an
+unpadded decimal value.
+For other transport protocols your program must print a single question mark (“?”) for this field.
+When the IPv4 header is not included in the trace the size of the transport’s header cannot be deter-
+mined and therefore this field will be a single dash (“-”).
+When the TCP or UDP header is not included in the packet trace the entry in this field will be a single
+dash (“-”).
+• payload len: The final value to be printed for each packet is the number of application layer payload
+bytes present in the original packet. This will be determined by starting with the ip len value and
+subtracting all IPv4 and transport layer header bytes.
+Again, if the IPv4 header is not present, this value cannot be determined and a “-” will be printed.
+Likewise, when the packet is a protocol other than TCP or UDP, report “?” for this field.
+Finally, when the TCP or UDP header is not available in the trace file, print a “-” in this field.
+Each IPv4 packet must produce a single line of output. The fields must be separated by a single space and
+no additional whitespace may appear at the beginning or end of the line.
+Sample output:
+./proj4 -s -r trace2.dmp
+1103112609.132870 54 240 20 T 20 200
+1103112610.465345 34 1000 20 T - -
+1103112615.436115 43 308 24 U 8 276
+1103112618.029221 20 - - - - -
+*/
+void s_option() {
+    FILE *f = fopen(trace_file, "rb"); 
+
+    if (f == NULL) {
+        fprintf(stderr, "error opening the file. Please try a different file"); 
+        exit(1); 
+    }
+
+    struct pkt_info pinfo; 
+    int fd = fileno(f); 
+    int ip_pkts = 0; 
+   
+    while (next_packet(fd, &pinfo)) {  
+        
+        // Check if the packet is an IP packet
+        if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
+            printf("%i", pinfo.caplen); 
+            ip_pkts++; 
+        }
+        else {
+            ip_pkts++; 
+        }
+    }
+
+
+}
+
 int main(int argc, char *argv[]) {
     parseargs(argc, argv);
 
     if (cmd_line_flags == ARG_R+ARG_I) {
         i_option(); 
+    }
+
+    if (cmd_line_flags == ARG_R+ARG_S) {
+        s_option(); 
     }
     return 0; 
 }
