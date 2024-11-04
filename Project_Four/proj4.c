@@ -215,6 +215,8 @@ header. See packet trace format document for more information.
 Sample output:
 ./proj4 -r trace1.dmp -i
 trace1.dmp 1103112609.132870 0.002484 4 3
+
+tcp-1.trace 1431329876.000005 0.000000 1 1
 */
 
 void i_option() {
