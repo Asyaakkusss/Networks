@@ -12,6 +12,8 @@ that process a packet trace file in different ways.
 #include <string.h>
 #include <ctype.h>
 #include <strings.h>
+#include <netinet/ip.h>
+
 
 
 #include <stdio.h>
@@ -172,6 +174,8 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
        if UDP packet, 
           set pinfo->udph to the start of the UDP header,
           setup values in pinfo->udph, as needed */
+    pinfo->iph = (struct iphdr *)(pinfo->pkt + sizeof(struct ether_header));
+    
     return (1);
 }
 
@@ -297,17 +301,18 @@ void s_option() {
     int ip_pkts = 0; 
    
     while (next_packet(fd, &pinfo)) {  
-        
+
         // Check if the packet is an IP packet
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
-            printf("%i", pinfo.caplen); 
+            int ip_len = ntohs(pinfo.iph->tot_len);
+
+            printf("%i %i", pinfo.caplen, ip_len); 
             ip_pkts++; 
         }
         else {
             ip_pkts++; 
         }
     }
-
 
 }
 
