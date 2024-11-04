@@ -13,7 +13,8 @@ that process a packet trace file in different ways.
 #include <ctype.h>
 #include <strings.h>
 #include <netinet/ip.h>
-
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
 
 
 #include <stdio.h>
@@ -320,12 +321,17 @@ void s_option() {
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             double ts = pinfo.now; //ts (this is wrong)
             int ip_len = ntohs(pinfo.iph->tot_len); //ip_len
-            int iphl = pinfo.iph->ihl; //iphl
+            int iphl = (pinfo.iph->ihl) * 4; //iphl
             int caplen = pinfo.caplen; //caplen
             if (pinfo.tcph != NULL) {
                 strcpy(transport, "T"); //transport 
             }
-            printf("%.6f %i %i %i %s \n", ts, caplen, ip_len, iphl, transport); 
+            int trans_hl = (pinfo.tcph->doff) * 4; //trans hl (this is wrong)
+
+            /*calculating payload length*/
+            int payload = ip_len - (iphl + trans_hl); 
+
+            printf("%.6f %i %i %i %s %d %i \n", ts, caplen, ip_len, iphl, transport, trans_hl, payload); 
             ip_pkts++; 
         }
         else {
