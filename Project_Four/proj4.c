@@ -146,6 +146,10 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
     if (bytes_read < sizeof (meta))
         fprintf (stderr, "cannot read meta information");
     pinfo->caplen = ntohs (meta.caplen);
+    pinfo->now = (double)ntohl(meta.secs) + (double)ntohl(meta.usecs)/(double)1e6; 
+    printf("%i\n", ntohl(meta.secs)); 
+    printf("%f\n", ntohl(meta.secs) + ntohl(meta.usecs)/1e6);
+    printf("%.6f\n", pinfo->now);
     /* TODO: set pinfo->now based on meta.secs & meta.usecs */
     if (pinfo->caplen == 0)
         return (1);
@@ -313,11 +317,13 @@ void s_option() {
 
         // Check if the packet is an IP packet
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
-            int ip_len = ntohs(pinfo.iph->tot_len);
+            double ts = pinfo.now; //ts (this is wrong)
+            int ip_len = ntohs(pinfo.iph->tot_len); //ip_len
+            int caplen = pinfo.caplen; //caplen
             if (pinfo.tcph != NULL) {
-                strcpy(transport, "T"); 
+                strcpy(transport, "T"); //transport 
             }
-            printf("%i %i %s", pinfo.caplen, ip_len, transport); 
+            printf("%.6f %i %i %s \n", ts, caplen, ip_len, transport); 
             ip_pkts++; 
         }
         else {
