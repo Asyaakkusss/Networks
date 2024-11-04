@@ -33,6 +33,7 @@ that process a packet trace file in different ways.
 
 char *trace_file = NULL; 
 unsigned short cmd_line_flags = 0;
+char transport[2]; 
 
 #define MAX_PKT_SIZE        1600
 
@@ -175,6 +176,14 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
           set pinfo->udph to the start of the UDP header,
           setup values in pinfo->udph, as needed */
     pinfo->iph = (struct iphdr *)(pinfo->pkt + sizeof(struct ether_header));
+
+    if (pinfo->iph->protocol == IPPROTO_TCP) {
+        pinfo->tcph = (struct tcphdr *)(pinfo->pkt + sizeof(struct ether_header)); 
+    }
+
+    if (pinfo->iph->protocol == IPPROTO_UDP) {
+        pinfo->udph = (struct udphdr *)(pinfo->pkt + sizeof(struct ether_header)); 
+    }
     
     return (1);
 }
@@ -305,8 +314,10 @@ void s_option() {
         // Check if the packet is an IP packet
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             int ip_len = ntohs(pinfo.iph->tot_len);
-
-            printf("%i %i", pinfo.caplen, ip_len); 
+            if (pinfo.tcph != NULL) {
+                strcpy(transport, "T"); 
+            }
+            printf("%i %i %s", pinfo.caplen, ip_len, transport); 
             ip_pkts++; 
         }
         else {
