@@ -34,7 +34,7 @@ that process a packet trace file in different ways.
 
 char *trace_file = NULL; 
 unsigned short cmd_line_flags = 0;
-char transport[2]; 
+char transport[2] = "-"; 
 
 #define MAX_PKT_SIZE        1600
 
@@ -148,9 +148,6 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
         fprintf (stderr, "cannot read meta information");
     pinfo->caplen = ntohs (meta.caplen);
     pinfo->now = (double)ntohl(meta.secs) + (double)ntohl(meta.usecs)/(double)1e6; 
-    printf("%i\n", ntohl(meta.secs)); 
-    printf("%f\n", ntohl(meta.secs) + ntohl(meta.usecs)/1e6);
-    printf("%.6f\n", pinfo->now);
     /* TODO: set pinfo->now based on meta.secs & meta.usecs */
     if (pinfo->caplen == 0)
         return (1);
@@ -265,23 +262,7 @@ indicates a packet is not an IPv4 packet, you must ignore it. Likewise, if the E
 in the packet trace you will ignore the packet. Each packet will yield a single line of output in this format:
 ts caplen ip_len iphl transport trans_hl payload_len
 The fields are defined as follows:
-• ts: This field is the timestamp of the packet, which is included with the packet’s meta information
-(see packet trace format document). Print this as a decimal number to 6 decimal places of precision.
-• caplen: This is the number of bytes from the original packet that have been “captured” in the packet
-trace. This value is included with the packet’s meta information. This value must be printed as an
-unpadded decimal number.
-• ip len: This is the total length (in bytes) of the IPv4 packet (from the total length field in the IPv4
-header). This should be printed as an unpadded decimal number.
-If the IPv4 header is not included in the packet trace file, you must print a singe dash (“-”) for this
-field.
-• iphl: This is the total length (in bytes) of the IPv4 header—which can be determined from the IPv4
-header.
-As with the ip len field, if the IPv4 header is not present in the packet trace, this field will be printed
-as a “-”.
-• transport: This indicates the transport protocol in use for this packet. A field in the IPv4 header
-will indicate which transport is in use. This field should be printed as a “U” for UDP packets and a
-“T” for TCP packets. For all other protocols, this value will be a question mark (“?”).
-This value will be a “-” if the IPv4 header is not included in the packet trace.
+
 • trans hl: This is the total number of bytes occupied by the TCP or UDP header written as an
 unpadded decimal value.
 For other transport protocols your program must print a single question mark (“?”) for this field.
@@ -321,19 +302,42 @@ void s_option() {
 
         // Check if the packet is an IP packet
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
-            double ts = pinfo.now; //ts (this is wrong)
+            double ts = pinfo.now; //ts 
             int ip_len = ntohs(pinfo.iph->tot_len); //ip_len
             int iphl = (pinfo.iph->ihl) * 4; //iphl
             int caplen = pinfo.caplen; //caplen
             if (pinfo.tcph != NULL) {
-                strcpy(transport, "T"); //transport 
+                strcpy(transport, "T"); //transport (tcp)
             }
+
+            if (pinfo.udph != NULL) {
+                strcpy(transport, "U"); //transport (udp)
+            }
+
+            if (pinfo.tcph == NULL && pinfo.udph == NULL) {
+                strcpy(transport, "?"); //transport (neither udp nor tcp)
+            }
+
             int trans_hl = (pinfo.tcph->doff) * 4; //trans hl (this is wrong)
 
             /*calculating payload length*/
             int payload = ip_len - (iphl + trans_hl); 
 
-            printf("%.6f %i %i %i %s %d %i \n", ts, caplen, ip_len, iphl, transport, trans_hl, payload); 
+            printf("%.6f %i", ts, caplen); 
+            if (ip_len <= 0) {
+                printf("%s ", "-"); 
+            }
+            else {
+                printf("%i ", ip_len);
+            }
+            if (iphl <= 0) {
+                printf("%s ", "-"); 
+            }
+            else {
+                printf("%i ", iphl);
+            }
+
+            printf("%s %d %i \n", transport,trans_hl, payload); 
             ip_pkts++; 
         }
         else {
