@@ -245,9 +245,13 @@ void i_option() {
         total_pkts++;
         
         // Check if the packet is an IP packet
+        if (pinfo.ethh == NULL) {
+            continue; 
+        }
         if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             ip_pkts++;
         }
+        
     }
     
     double trace_duration = last_time - first_time;
@@ -297,7 +301,12 @@ void s_option() {
     while (next_packet(fd, &pinfo)) {  
 
         // Check if the packet is an IP packet
-        if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
+        if (pinfo.ethh == NULL) {
+            continue; 
+        }
+
+        // Check if the packet is an IP packet
+        else if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             double ts = pinfo.now; //ts 
             int ip_len = ntohs(pinfo.iph->tot_len); //ip_len
             int iphl = (pinfo.iph->ihl) * 4; //iphl

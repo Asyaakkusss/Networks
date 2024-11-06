@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
-      "args": ["./proj4", "-s", "-r", "udp-1.trace"],
+      "args": ["./proj4", "-i", "-r", "wacky.trace"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/asyaakkus/Networks/Project_Four",
