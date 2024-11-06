@@ -38,6 +38,7 @@ char transport[2] = "-";
 char transhl_questionmk[2] = "?"; 
 char transhl_dash[2] = "-"; 
 int trans_hl = 0; 
+int payload = 0; 
 #define MAX_PKT_SIZE        1600
 
 /* meta information, using same layout as trace file */
@@ -265,13 +266,6 @@ in the packet trace you will ignore the packet. Each packet will yield a single 
 ts caplen ip_len iphl transport trans_hl payload_len
 The fields are defined as follows:
 
-• trans hl: This is the total number of bytes occupied by the TCP or UDP header written as an
-unpadded decimal value.
-For other transport protocols your program must print a single question mark (“?”) for this field.
-When the IPv4 header is not included in the trace the size of the transport’s header cannot be deter-
-mined and therefore this field will be a single dash (“-”).
-When the TCP or UDP header is not included in the packet trace the entry in this field will be a single
-dash (“-”).
 • payload len: The final value to be printed for each packet is the number of application layer payload
 bytes present in the original packet. This will be determined by starting with the ip len value and
 subtracting all IPv4 and transport layer header bytes.
@@ -322,14 +316,16 @@ void s_option() {
 
             if (pinfo.tcph != NULL) {
                 trans_hl = (pinfo.tcph->doff) * 4; //trans hl for tcp (this is wrong)
+                payload = ip_len - (iphl + trans_hl); 
+
             }
 
             if (pinfo.udph != NULL) {
                 trans_hl = 8; //trans hl for udp (this is wrong)
+                payload = ip_len - (iphl + trans_hl);
             }
 
             /*calculating payload length*/
-            int payload = ip_len - (iphl + trans_hl); 
 
             printf("%.6f %i", ts, caplen); 
             if (ip_len <= 0) {
@@ -347,17 +343,16 @@ void s_option() {
 
             printf("%s ", transport); 
             if (pinfo.tcph != NULL || pinfo.udph != NULL) {
-                printf("%d ", trans_hl); 
+                printf("%d %i \n", trans_hl, payload); 
             }
             else if (pinfo.tcph == NULL && pinfo.udph == NULL) {
-                printf("%s ", transhl_questionmk); 
+                printf("%s %s \n", transhl_questionmk, transhl_questionmk); 
             }
 
             else {
-                printf("%s ", transhl_dash); 
+                printf("%s %s \n", transhl_dash, transhl_questionmk); 
             }
 
-            printf("%i\n", payload); 
             ip_pkts++; 
         }
         else {
