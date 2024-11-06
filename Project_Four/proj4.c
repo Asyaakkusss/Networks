@@ -327,7 +327,7 @@ void s_option() {
 
             /*calculating payload length*/
 
-            printf("%.6f %i", ts, caplen); 
+            printf("%.6f %i ", ts, caplen); 
             if (ip_len <= 0) {
                 printf("%s ", "-"); 
             }
