@@ -35,7 +35,9 @@ that process a packet trace file in different ways.
 char *trace_file = NULL; 
 unsigned short cmd_line_flags = 0;
 char transport[2] = "-"; 
-
+char transhl_questionmk[2] = "?"; 
+char transhl_dash[2] = "-"; 
+int trans_hl = 0; 
 #define MAX_PKT_SIZE        1600
 
 /* meta information, using same layout as trace file */
@@ -318,7 +320,13 @@ void s_option() {
                 strcpy(transport, "?"); //transport (neither udp nor tcp)
             }
 
-            int trans_hl = (pinfo.tcph->doff) * 4; //trans hl (this is wrong)
+            if (pinfo.tcph != NULL) {
+                trans_hl = (pinfo.tcph->doff) * 4; //trans hl for tcp (this is wrong)
+            }
+
+            if (pinfo.udph != NULL) {
+                trans_hl = 8; //trans hl for udp (this is wrong)
+            }
 
             /*calculating payload length*/
             int payload = ip_len - (iphl + trans_hl); 
@@ -337,7 +345,19 @@ void s_option() {
                 printf("%i ", iphl);
             }
 
-            printf("%s %d %i \n", transport,trans_hl, payload); 
+            printf("%s ", transport); 
+            if (pinfo.tcph != NULL || pinfo.udph != NULL) {
+                printf("%d ", trans_hl); 
+            }
+            else if (pinfo.tcph == NULL && pinfo.udph == NULL) {
+                printf("%s ", transhl_questionmk); 
+            }
+
+            else {
+                printf("%s ", transhl_dash); 
+            }
+
+            printf("%i\n", payload); 
             ip_pkts++; 
         }
         else {
