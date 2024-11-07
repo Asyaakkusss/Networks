@@ -183,11 +183,11 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
     pinfo->iph = (struct iphdr *)(pinfo->pkt + sizeof(struct ether_header));
 
     if (pinfo->iph->protocol == IPPROTO_TCP) {
-        pinfo->tcph = (struct tcphdr *)(pinfo->pkt + sizeof(struct ether_header)); 
+        pinfo->tcph = (struct tcphdr *)(pinfo->pkt + sizeof(struct ether_header) + sizeof(struct iphdr)); 
     }
 
     if (pinfo->iph->protocol == IPPROTO_UDP) {
-        pinfo->udph = (struct udphdr *)(pinfo->pkt + sizeof(struct ether_header)); 
+        pinfo->udph = (struct udphdr *)(pinfo->pkt + + sizeof(struct ether_header) + sizeof(struct iphdr)); 
     }
     
     return (1);
@@ -371,6 +371,64 @@ void s_option() {
 
 }
 
+/*
+When your program is run with the “-t” option it will operate in “packet printing mode”. In this mode, you
+will output a single line of information about each TCP packet in the packet trace file. Non-TCP packets
+will be ignored. Further, TCP packets that do not have the TCP header in the packet trace file will be
+ignored. The output format for this mode is:
+ts src_ip src_port dst_ip dst_port ip_ttl ip_id syn window seqno
+The fields are defined as follows:
+• ts: This field is the timestamp of the packet, which is included with the packet’s meta information
+(see packet trace format document). Print this as a decimal number to 6 decimal places of precision.
+• src ip: This is the dotted-quad version of the source IPv4 address. E.g., “192.168.1.43”. Print the
+numbers in decimal and do not pad.
+• src port: This is the unpadded decimal version of TCP’s source port number.
+• dst ip: This is the dotted-quad version of the destination IPv4 address. E.g., “192.168.1.43”. Print
+the numbers in decimal and do not pad.
+• dst port: This is the unpadded decimal version of TCP’s destination port number.
+• ip ttl: This is the unpadded decimal value in IP’s TTL field.
+• ip id: This is the unpadded decimal value in IP’s ID field.
+• syn: This must indicate whether the TCP packet’s SYN bit is set or not. When the bit is turned on
+(i.e., is “1”) this field in the output will be “Y”. When the bit is turned off (i.e., is “0”) this field in
+the output will be “N”.
+• window: This is the unpadded decimal value in TCP’s advertised window field. (Disregard any window
+scaling that may be happening.)
+• seqno: This is the unpadded decimal value in TCP’s sequence number field.
+Each TCP packet must produce a single line of output. The fields must be separated by a single space and
+no additional whitespace may appear at the beginning or end of the line.
+Sample output:
+./proj4 -t -r some-example.dmp
+1103112609.132870 192.168.1.2 4512 192.168.100.34 80 127 4912 Y 16384 3828024032
+1103112610.983425 192.168.100.34 80 192.168.1.2 4512 63 11783 N 32961 37709858
+*/
+void t_option() {
+
+    FILE *f = fopen(trace_file, "rb"); 
+
+    if (f == NULL) {
+        fprintf(stderr, "error opening the file. Please try a different file"); 
+        exit(1); 
+    }
+
+    struct pkt_info pinfo; 
+    int fd = fileno(f); 
+    int ip_pkts = 0; 
+    double ts = 0; 
+    double src_ip = 0; 
+
+    while (next_packet(fd, &pinfo)) {
+        if (pinfo.tcph == NULL) {
+            continue; 
+        }
+
+        else {
+        ts = pinfo.now; 
+        }
+    }
+
+    printf("%.6f ", ts); 
+}
+
 int main(int argc, char *argv[]) {
     parseargs(argc, argv);
 
@@ -380,6 +438,10 @@ int main(int argc, char *argv[]) {
 
     if (cmd_line_flags == ARG_R+ARG_S) {
         s_option(); 
+    }
+
+    if (cmd_line_flags == ARG_R+ARG_T) {
+        t_option(); 
     }
     return 0; 
 }
