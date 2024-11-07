@@ -423,6 +423,7 @@ void t_option() {
     int ip_ttl = 0; 
     int ip_id = 0; 
     int window = 0; 
+    int seqno = 0; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -440,16 +441,16 @@ void t_option() {
         ip_ttl = pinfo.iph->ttl; //ttl 
         ip_id = ntohs(pinfo.iph->id);  
         
-        //make sure syn flag is set 
         if(pinfo.tcph->th_flags & TH_SYN) {
             strcpy(syn_status, "Y"); 
         }
 
         window = ntohs(pinfo.tcph->window); 
+        seqno = ntohl(pinfo.tcph->seq);  
         
         }
 
-        printf("%.6f %i %i %i %i %s %i \n", ts, src_port, dst_port, ip_ttl, ip_id, syn_status, window); 
+        printf("%.6f %i %i %i %i %s %i %i \n", ts, src_port, dst_port, ip_ttl, ip_id, syn_status, window, seqno); 
 
     }
 
