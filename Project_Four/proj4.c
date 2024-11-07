@@ -416,9 +416,9 @@ void t_option() {
     int fd = fileno(f); 
     int ip_pkts = 0; 
     double ts = 0; 
-    char *src_ip;  
+    char src_ip[INET_ADDRSTRLEN];  
     int src_port = 0; 
-    char *dst_ip; 
+    char dst_ip[INET_ADDRSTRLEN]; 
     int dst_port = 0; 
     int ip_ttl = 0; 
     int ip_id = 0; 
@@ -432,13 +432,13 @@ void t_option() {
 
         else {
         ts = pinfo.now; //ts
-        struct in_addr addr;
-        struct in_addr daddr; 
-        addr.s_addr = pinfo.iph->saddr;
-        daddr.s_addr = pinfo.iph->daddr; 
-        src_ip = inet_ntoa(addr); //src ip 
+        struct in_addr s_addr;
+        struct in_addr d_addr; 
+        s_addr.s_addr = pinfo.iph->saddr;
+        d_addr.s_addr = pinfo.iph->daddr; 
+        inet_ntop(AF_INET, &pinfo.iph->saddr, src_ip, INET_ADDRSTRLEN); //src ip 
         src_port = ntohs(pinfo.tcph->source); //src port 
-        dst_ip = inet_ntoa(daddr); //dst ip
+        inet_ntop(AF_INET, &pinfo.iph->daddr, dst_ip, INET_ADDRSTRLEN); //dst ip
         dst_port = ntohs(pinfo.tcph->dest); //dst port 
         ip_ttl = pinfo.iph->ttl; //ttl 
         ip_id = ntohs(pinfo.iph->id);  
