@@ -420,6 +420,7 @@ void t_option() {
     char *dst_ip; 
     int dst_port = 0; 
     int ip_ttl = 0; 
+    int ip_id = 0; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -434,10 +435,11 @@ void t_option() {
         src_port = ntohs(pinfo.tcph->source); //src port 
         //dst_ip = inet_ntoa(dst_ip_int); //dst port 
         dst_port = ntohs(pinfo.tcph->dest); //dst port 
-        ip_ttl = pinfo.iph->ttl; 
+        ip_ttl = pinfo.iph->ttl; //ttl 
+        ip_id = ntohs(pinfo.iph->id);  
         }
 
-        printf("%.6f %i %i %i \n", ts, src_port, dst_port, ip_ttl); 
+        printf("%.6f %i %i %i %i \n", ts, src_port, dst_port, ip_ttl, ip_id); 
 
     }
 
