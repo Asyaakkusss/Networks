@@ -414,7 +414,8 @@ void t_option() {
     int fd = fileno(f); 
     int ip_pkts = 0; 
     double ts = 0; 
-    double src_ip = 0; 
+    char *src_ip;  
+    int src_port = 0; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -422,11 +423,16 @@ void t_option() {
         }
 
         else {
-        ts = pinfo.now; 
+        ts = pinfo.now; //ts
+        int src_ip_int = pinfo.iph->saddr; //src ip 
+        src_port = ntohs(pinfo.tcph->source); //src port 
+        //src_ip = inet_ntoa(src_ip_int); 
         }
+
+        printf("%.6f %i \n", ts, src_port); 
+
     }
 
-    printf("%.6f ", ts); 
 }
 
 int main(int argc, char *argv[]) {
