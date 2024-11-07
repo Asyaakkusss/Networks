@@ -433,11 +433,12 @@ void t_option() {
         else {
         ts = pinfo.now; //ts
         struct in_addr addr;
+        struct in_addr daddr; 
         addr.s_addr = pinfo.iph->saddr;
-        int dst_ip_int = pinfo.iph->daddr; 
+        daddr.s_addr = pinfo.iph->daddr; 
         src_ip = inet_ntoa(addr); //src ip 
         src_port = ntohs(pinfo.tcph->source); //src port 
-        //dst_ip = inet_ntoa(dst_ip_int); //dst port 
+        dst_ip = inet_ntoa(daddr); //dst ip
         dst_port = ntohs(pinfo.tcph->dest); //dst port 
         ip_ttl = pinfo.iph->ttl; //ttl 
         ip_id = ntohs(pinfo.iph->id);  
@@ -451,7 +452,7 @@ void t_option() {
         
         }
 
-        printf("%.6f %s %i %i %i %i %s %i %i \n", ts, src_ip, src_port, dst_port, ip_ttl, ip_id, syn_status, window, seqno); 
+        printf("%.6f %s %i %s %i %i %i %s %i %i \n", ts, src_ip, src_port, dst_ip, dst_port, ip_ttl, ip_id, syn_status, window, seqno); 
 
     }
 
