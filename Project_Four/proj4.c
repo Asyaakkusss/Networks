@@ -38,6 +38,7 @@ unsigned short cmd_line_flags = 0;
 char transport[2] = "-"; 
 char transhl_questionmk[2] = "?"; 
 char transhl_dash[2] = "-"; 
+char syn_status[2] = "N"; 
 int trans_hl = 0; 
 int payload = 0; 
 #define MAX_PKT_SIZE        1600
@@ -421,6 +422,7 @@ void t_option() {
     int dst_port = 0; 
     int ip_ttl = 0; 
     int ip_id = 0; 
+    int window = 0; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -437,9 +439,17 @@ void t_option() {
         dst_port = ntohs(pinfo.tcph->dest); //dst port 
         ip_ttl = pinfo.iph->ttl; //ttl 
         ip_id = ntohs(pinfo.iph->id);  
+        
+        //make sure syn flag is set 
+        if(pinfo.tcph->th_flags & TH_SYN) {
+            strcpy(syn_status, "Y"); 
         }
 
-        printf("%.6f %i %i %i %i \n", ts, src_port, dst_port, ip_ttl, ip_id); 
+        window = ntohs(pinfo.tcph->window); 
+        
+        }
+
+        printf("%.6f %i %i %i %i %s %i \n", ts, src_port, dst_port, ip_ttl, ip_id, syn_status, window); 
 
     }
 
