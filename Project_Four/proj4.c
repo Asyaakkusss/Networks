@@ -15,6 +15,7 @@ that process a packet trace file in different ways.
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>     
 
 
 #include <stdio.h>
@@ -416,6 +417,8 @@ void t_option() {
     double ts = 0; 
     char *src_ip;  
     int src_port = 0; 
+    char *dst_ip; 
+    int dst_port = 0; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -424,12 +427,15 @@ void t_option() {
 
         else {
         ts = pinfo.now; //ts
-        int src_ip_int = pinfo.iph->saddr; //src ip 
+        int src_ip_int = pinfo.iph->saddr; 
+        int dst_ip_int = pinfo.iph->daddr; 
+        //src_ip = inet_ntoa(pinfo.iph->saddr); //src ip 
         src_port = ntohs(pinfo.tcph->source); //src port 
-        //src_ip = inet_ntoa(src_ip_int); 
+        //dst_ip = inet_ntoa(dst_ip_int); //dst port 
+        dst_port = ntohs(pinfo.tcph->dest); //dst port 
         }
 
-        printf("%.6f %i \n", ts, src_port); 
+        printf("%.6f %i %i \n", ts, src_port, dst_port); 
 
     }
 
