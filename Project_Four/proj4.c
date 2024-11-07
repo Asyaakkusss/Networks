@@ -419,6 +419,7 @@ void t_option() {
     int src_port = 0; 
     char *dst_ip; 
     int dst_port = 0; 
+    int ip_ttl = 0; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -433,9 +434,10 @@ void t_option() {
         src_port = ntohs(pinfo.tcph->source); //src port 
         //dst_ip = inet_ntoa(dst_ip_int); //dst port 
         dst_port = ntohs(pinfo.tcph->dest); //dst port 
+        ip_ttl = pinfo.iph->ttl; 
         }
 
-        printf("%.6f %i %i \n", ts, src_port, dst_port); 
+        printf("%.6f %i %i %i \n", ts, src_port, dst_port, ip_ttl); 
 
     }
 
