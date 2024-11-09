@@ -477,8 +477,8 @@ void update_traffic_struct(struct traffic_info **table, int *count, struct in_ad
     // Check if an entry for the source IP and destination IP already exists
     for (int i = 0; i < *count; i++) {
         if ((*table)[i].src_ip.s_addr == src_ip.s_addr && (*table)[i].dst_ip.s_addr == dst_ip.s_addr) {
-            (*table)[i].total_pkts += 1;           // Increment packet count
-            (*table)[i].traffic_volume += pkt_size; // Add to traffic volume
+            (*table)[i].total_pkts += 1;          
+            (*table)[i].traffic_volume += pkt_size; 
             return;
         }
     }
@@ -519,10 +519,15 @@ void process_trace_file(FILE *f, struct traffic_info **table, int *count) {
 }
 
 void print_traffic_info(struct traffic_info *table, int count) {
+    char src_ip_mod[INET_ADDRSTRLEN]; 
+    char dst_ip_mod[INET_ADDRSTRLEN]; 
     for (int i = 0; i < count; i++) {
+        inet_ntop(AF_INET, &(table[i].src_ip), src_ip_mod, INET_ADDRSTRLEN); 
+        inet_ntop(AF_INET, &(table[i].dst_ip), dst_ip_mod, INET_ADDRSTRLEN); 
+
         printf("%s %s %d %d\n",
-            inet_ntoa(table[i].src_ip),
-            inet_ntoa(table[i].dst_ip),
+            src_ip_mod, 
+            dst_ip_mod,
             table[i].total_pkts,
             table[i].traffic_volume);
     }
