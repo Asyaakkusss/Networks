@@ -43,6 +43,16 @@ int trans_hl = 0;
 int payload = 0; 
 #define MAX_PKT_SIZE        1600
 
+/*info for the traffic info for m option
+members: source IP, destination IP, total packets, traffic volume*/
+struct traffic_info 
+{
+    struct in_addr src_ip;    
+    struct in_addr dst_ip;    
+    unsigned int total_pkts;  
+    unsigned int traffic_volume; 
+}; 
+
 /* meta information, using same layout as trace file */
 struct meta_info
 {
@@ -462,19 +472,93 @@ void t_option() {
 
 }
 
+
+void update_traffic_struct(struct traffic_info **table, int *count, struct in_addr src_ip, struct in_addr dst_ip, int pkt_size) {
+    // Check if an entry for the source IP and destination IP already exists
+    for (int i = 0; i < *count; i++) {
+        if ((*table)[i].src_ip.s_addr == src_ip.s_addr && (*table)[i].dst_ip.s_addr == dst_ip.s_addr) {
+            (*table)[i].total_pkts += 1;           // Increment packet count
+            (*table)[i].traffic_volume += pkt_size; // Add to traffic volume
+            return;
+        }
+    }
+
+    // If it doesn't exist, add it in
+    *table = realloc(*table, (*count + 1) * sizeof(struct traffic_info));
+    if (*table == NULL) {
+        perror("Failed to realloc memory for traffic table");
+        exit(EXIT_FAILURE);
+    }
+
+    (*table)[*count].src_ip = src_ip;
+    (*table)[*count].dst_ip = dst_ip;
+    (*table)[*count].total_pkts = 1;
+    (*table)[*count].traffic_volume = pkt_size;
+    (*count)++;
+}
+
+void process_trace_file(FILE *f, struct traffic_info **table, int *count) {
+    struct pkt_info pinfo;
+
+    while (next_packet(fileno(f), &pinfo)) {
+        if (pinfo.tcph == NULL) {
+            continue; 
+        }
+
+        // Calculate application layer data size
+        int ip_header_len = pinfo.iph->ihl * 4;
+        int tcp_header_len = pinfo.tcph->doff * 4;
+        int pkt_size = ntohs(pinfo.iph->tot_len) - (ip_header_len + tcp_header_len);
+
+        struct in_addr src_ip, dst_ip;
+        src_ip.s_addr = pinfo.iph->saddr;
+        dst_ip.s_addr = pinfo.iph->daddr;
+
+        update_traffic_struct(table, count, src_ip, dst_ip, pkt_size);
+    }
+}
+
+void print_traffic_info(struct traffic_info *table, int count) {
+    for (int i = 0; i < count; i++) {
+        printf("%s %s %d %d\n",
+            inet_ntoa(table[i].src_ip),
+            inet_ntoa(table[i].dst_ip),
+            table[i].total_pkts,
+            table[i].traffic_volume);
+    }
+}
+
 int main(int argc, char *argv[]) {
     parseargs(argc, argv);
 
-    if (cmd_line_flags == ARG_R+ARG_I) {
+    if (cmd_line_flags == ARG_R + ARG_I) {
         i_option(); 
     }
 
-    if (cmd_line_flags == ARG_R+ARG_S) {
+    if (cmd_line_flags == ARG_R + ARG_S) {
         s_option(); 
     }
 
-    if (cmd_line_flags == ARG_R+ARG_T) {
+    if (cmd_line_flags == ARG_R + ARG_T) {
         t_option(); 
+    }
+
+    if (cmd_line_flags == ARG_R + ARG_M) {
+        FILE *f = fopen(trace_file, "rb"); 
+
+        if (f == NULL) {
+            fprintf(stderr, "Error opening file. Please try a different file.\n"); 
+            exit(EXIT_FAILURE); 
+        }
+
+        struct traffic_info *table = NULL; 
+        int count = 0; 
+
+        process_trace_file(f, &table, &count); 
+        print_traffic_info(table, count); 
+
+        free(table); 
+        fclose(f); 
     }
     return 0; 
 }
