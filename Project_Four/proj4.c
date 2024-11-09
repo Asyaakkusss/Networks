@@ -364,14 +364,14 @@ void s_option() {
 
             printf("%s ", transport); 
             if (pinfo.tcph != NULL || pinfo.udph != NULL) {
-                printf("%d %i \n", trans_hl, payload); 
+                printf("%d %i\n", trans_hl, payload); 
             }
             else if (pinfo.tcph == NULL && pinfo.udph == NULL) {
-                printf("%s %s \n", transhl_questionmk, transhl_questionmk); 
+                printf("%s %s\n", transhl_questionmk, transhl_questionmk); 
             }
 
             else {
-                printf("%s %s \n", transhl_dash, transhl_questionmk); 
+                printf("%s %s\n", transhl_dash, transhl_questionmk); 
             }
 
             ip_pkts++; 
@@ -553,7 +553,7 @@ int main(int argc, char *argv[]) {
 
         if (f == NULL) {
             fprintf(stderr, "Error opening file. Please try a different file.\n"); 
-            exit(EXIT_FAILURE); 
+            exit(1); 
         }
 
         struct traffic_info *table = NULL; 
