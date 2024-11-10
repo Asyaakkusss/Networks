@@ -39,9 +39,16 @@ char transport[2] = "-";
 char transhl_questionmk[2] = "?"; 
 char transhl_dash[2] = "-"; 
 char syn_status[2] = "N"; 
-int trans_hl = 0; 
-int payload = 0; 
-#define MAX_PKT_SIZE        1600
+#define MAX_PKT_SIZE 1600
+#define FOUR 4
+#define NEG_ONE -1
+#define SIX 6
+#define SEVENTEEN 17
+//i option variables 
+int total_pkts = 0;
+int ip_pkts = 0; 
+double first_time = 0.0; 
+double last_time = 0.0; 
 
 /*info for the traffic info for m option
 members: source IP, destination IP, total packets, traffic volume*/
@@ -163,7 +170,6 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
         fprintf (stderr, "cannot read meta information");
     pinfo->caplen = ntohs (meta.caplen);
     pinfo->now = (double)ntohl(meta.secs) + (double)ntohl(meta.usecs)/(double)1e6; 
-    /* TODO: set pinfo->now based on meta.secs & meta.usecs */
     if (pinfo->caplen == 0)
         return (1);
     if (pinfo->caplen > MAX_PKT_SIZE)
@@ -184,14 +190,6 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
     if (pinfo->caplen == sizeof (struct ether_header))
         /* we don't have anything beyond the ethernet header to process */
         return (1);
-    /* TODO:
-       set pinfo->iph to start of IP header
-       if TCP packet, 
-          set pinfo->tcph to the start of the TCP header
-          setup values in pinfo->tcph, as needed
-       if UDP packet, 
-          set pinfo->udph to the start of the UDP header,
-          setup values in pinfo->udph, as needed */
     pinfo->iph = (struct iphdr *)(pinfo->pkt + sizeof(struct ether_header));
 
     if (pinfo->iph->protocol == IPPROTO_TCP) {
@@ -231,21 +229,11 @@ trace1.dmp 1103112609.132870 0.002484 4 3
 tcp-1.trace 1431329876.000005 0.000000 1 1
 */
 
-void i_option() {
-    FILE *f = fopen(trace_file, "rb"); 
-    
-    if (f == NULL) {
-        fprintf(stderr, "error opening the file. Please try a different file"); 
-        exit(1); 
-    }
+void i_option(FILE *f) {
 
     struct pkt_info pinfo; 
 
     int fd = fileno(f); 
-    int total_pkts = 0;
-    int ip_pkts = 0; 
-    double first_time = 0.0; 
-    double last_time = 0.0; 
 
     while (next_packet(fd, &pinfo)) {
         if (total_pkts == 0) {
@@ -319,13 +307,7 @@ Sample output:
 1103112618.029221 20 - - - - -
 1431329876.000005 54 40 20 T 20 0
 */
-void s_option() {
-    FILE *f = fopen(trace_file, "rb"); 
-
-    if (f == NULL) {
-        fprintf(stderr, "error opening the file. Please try a different file"); 
-        exit(1); 
-    }
+void s_option(FILE *f) {
 
     struct pkt_info pinfo; 
     int fd = fileno(f); 
@@ -338,25 +320,25 @@ void s_option() {
             continue; 
         }
 
-        
-
         // Check if the packet is an IP packet
         else if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             
             double ts = pinfo.now; //ts 
-            int ip_len = (pinfo.iph != NULL) ? ntohs(pinfo.iph->tot_len) : -1; //ip_len
-            int iphl = (pinfo.iph != NULL) ? (pinfo.iph->ihl) * 4 : -1; //iphl
+            int ip_len = (pinfo.iph != NULL) ? ntohs(pinfo.iph->tot_len) : NEG_ONE; //ip_len
+            int iphl = (pinfo.iph != NULL) ? (pinfo.iph->ihl) * FOUR: NEG_ONE; //iphl
             int caplen = pinfo.caplen; //caplen
+            int trans_hl; 
+            int payload; 
 
             if (pinfo.iph == NULL) {
                 strcpy(transport, "-"); //transport doesn't exist bc ip header doesn't exist 
             }
 
-            else if (pinfo.iph->protocol == 6) {
+            else if (pinfo.iph->protocol == SIX) {
                 strcpy(transport, "T"); //transport (tcp)
             }
 
-            else if (pinfo.iph->protocol == 17) {
+            else if (pinfo.iph->protocol == SEVENTEEN) {
                 strcpy(transport, "U"); //transport (udp)
             }
 
@@ -365,13 +347,13 @@ void s_option() {
             }
 
 
-            if (pinfo.iph != NULL && pinfo.iph->protocol == 6) {
-                trans_hl = (pinfo.tcph->doff) * 4; //trans hl for tcp (this is wrong)
+            if (pinfo.iph != NULL && pinfo.iph->protocol == SIX) {
+                trans_hl = (pinfo.tcph->doff) * FOUR; //trans hl for tcp (this is wrong)
                 payload = ip_len - (iphl + trans_hl); 
 
             }
 
-            if (pinfo.iph != NULL && pinfo.iph->protocol == 17) {
+            if (pinfo.iph != NULL && pinfo.iph->protocol == SEVENTEEN) {
                 trans_hl = 8; //trans hl for udp (this is wrong)
                 payload = ip_len - (iphl + trans_hl);
             }
@@ -401,7 +383,7 @@ void s_option() {
             }
 
             else {
-                printf("%s %s\n", transhl_dash, transhl_questionmk); 
+                printf("%s %s\n", transhl_dash, transhl_dash); 
             }
 
             ip_pkts++; 
@@ -443,14 +425,7 @@ Sample output:
 1103112609.132870 192.168.1.2 4512 192.168.100.34 80 127 4912 Y 16384 3828024032
 1103112610.983425 192.168.100.34 80 192.168.1.2 4512 63 11783 N 32961 37709858
 */
-void t_option() {
-
-    FILE *f = fopen(trace_file, "rb"); 
-
-    if (f == NULL) {
-        fprintf(stderr, "error opening the file. Please try a different file"); 
-        exit(1); 
-    }
+void t_option(FILE *f) {
 
     struct pkt_info pinfo; 
     int fd = fileno(f); 
@@ -566,25 +541,26 @@ void print_traffic_info(struct traffic_info *table, int count) {
 int main(int argc, char *argv[]) {
     parseargs(argc, argv);
 
+    FILE *f = fopen(trace_file, "rb"); 
+    
+    if (f == NULL) {
+        fprintf(stderr, "error opening the file. Please try a different file\n"); 
+        exit(1); 
+    }
+
     if (cmd_line_flags == ARG_R + ARG_I) {
-        i_option(); 
+        i_option(f); 
     }
 
     if (cmd_line_flags == ARG_R + ARG_S) {
-        s_option(); 
+        s_option(f); 
     }
 
     if (cmd_line_flags == ARG_R + ARG_T) {
-        t_option(); 
+        t_option(f); 
     }
 
     if (cmd_line_flags == ARG_R + ARG_M) {
-        FILE *f = fopen(trace_file, "rb"); 
-
-        if (f == NULL) {
-            fprintf(stderr, "Error opening file. Please try a different file.\n"); 
-            exit(1); 
-        }
 
         struct traffic_info *table = NULL; 
         int count = 0; 
