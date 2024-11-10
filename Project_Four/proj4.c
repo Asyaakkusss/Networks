@@ -317,12 +317,16 @@ void s_option() {
             continue; 
         }
 
+        
+
         // Check if the packet is an IP packet
         else if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
+            
             double ts = pinfo.now; //ts 
-            int ip_len = ntohs(pinfo.iph->tot_len); //ip_len
-            int iphl = (pinfo.iph->ihl) * 4; //iphl
+            int ip_len = (pinfo.iph != NULL) ? ntohs(pinfo.iph->tot_len) : -1; //ip_len
+            int iphl = (pinfo.iph != NULL) ? (pinfo.iph->ihl) * 4 : -1; //iphl
             int caplen = pinfo.caplen; //caplen
+
             if (pinfo.tcph != NULL) {
                 strcpy(transport, "T"); //transport (tcp)
             }
@@ -466,7 +470,7 @@ void t_option() {
         
         }
 
-        printf("%.6f %s %i %s %i %i %i %s %i %u \n", ts, src_ip, src_port, dst_ip, dst_port, ip_ttl, ip_id, syn_status, window, seqno); 
+        printf("%.6f %s %i %s %i %i %i %s %i %u\n", ts, src_ip, src_port, dst_ip, dst_port, ip_ttl, ip_id, syn_status, window, seqno); 
 
     }
 
