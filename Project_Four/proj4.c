@@ -194,11 +194,11 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
     pinfo->iph = (struct iphdr *)(pinfo->pkt + sizeof(struct ether_header));
 
     if (pinfo->iph->protocol == IPPROTO_TCP) {
-        pinfo->tcph = (struct tcphdr *)(pinfo->pkt + sizeof(struct ether_header) + sizeof(struct iphdr)); 
+        pinfo->tcph = (struct tcphdr *)(pinfo->pkt + sizeof(struct ether_header) + (pinfo->iph->ihl * 4)); 
     }
 
     if (pinfo->iph->protocol == IPPROTO_UDP) {
-        pinfo->udph = (struct udphdr *)(pinfo->pkt + + sizeof(struct ether_header) + sizeof(struct iphdr)); 
+        pinfo->udph = (struct udphdr *)(pinfo->pkt + + sizeof(struct ether_header) + (pinfo->iph->ihl * 4)); 
     }
     
     return (1);
@@ -426,16 +426,16 @@ void t_option(FILE *f) {
 
     struct pkt_info pinfo; 
     int fd = fileno(f); 
-    int ip_pkts = 0; 
-    double ts = 0; 
+    int ip_pkts; 
+    double ts; 
     char src_ip[INET_ADDRSTRLEN];  
-    int src_port = 0; 
+    int src_port; 
     char dst_ip[INET_ADDRSTRLEN]; 
-    int dst_port = 0; 
-    int ip_ttl = 0; 
-    int ip_id = 0; 
-    int window = 0; 
-    uint32_t seqno = 0; 
+    int dst_port; 
+    int ip_ttl; 
+    int ip_id; 
+    int window; 
+    uint32_t seqno; 
 
     while (next_packet(fd, &pinfo)) {
         if (pinfo.tcph == NULL) {
@@ -486,7 +486,7 @@ void update_traffic_struct(struct traffic_info **table, int *count, struct in_ad
     }
 
     // If it doesn't exist, add it in
-    *table = realloc(*table, (*count + 1) * sizeof(struct traffic_info));
+    *table = realloc(*table, (*count + sizeof(unsigned char)) * sizeof(struct traffic_info));
     if (*table == NULL) {
         perror("Failed to realloc memory for traffic table");
         exit(EXIT_FAILURE);
@@ -494,7 +494,7 @@ void update_traffic_struct(struct traffic_info **table, int *count, struct in_ad
 
     (*table)[*count].src_ip = src_ip;
     (*table)[*count].dst_ip = dst_ip;
-    (*table)[*count].total_pkts = 1;
+    (*table)[*count].total_pkts = sizeof(unsigned char);
     (*table)[*count].traffic_volume = pkt_size;
     (*count)++;
 }
@@ -508,8 +508,8 @@ void process_trace_file(FILE *f, struct traffic_info **table, int *count) {
         }
 
         // Calculate application layer data size
-        int ip_header_len = pinfo.iph->ihl * 4;
-        int tcp_header_len = pinfo.tcph->doff * 4;
+        int ip_header_len = pinfo.iph->ihl * FOUR;
+        int tcp_header_len = pinfo.tcph->doff * FOUR;
         int pkt_size = ntohs(pinfo.iph->tot_len) - (ip_header_len + tcp_header_len);
 
         struct in_addr src_ip, dst_ip;
