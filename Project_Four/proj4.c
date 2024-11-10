@@ -44,6 +44,7 @@ char syn_status[2] = "N";
 #define NEG_ONE -1
 #define SIX 6
 #define SEVENTEEN 17
+#define EIGHT 8
 //i option variables 
 int total_pkts = 0;
 int ip_pkts = 0; 
@@ -311,7 +312,6 @@ void s_option(FILE *f) {
 
     struct pkt_info pinfo; 
     int fd = fileno(f); 
-    int ip_pkts = 0; 
    
     while (next_packet(fd, &pinfo)) {  
 
@@ -354,7 +354,7 @@ void s_option(FILE *f) {
             }
 
             if (pinfo.iph != NULL && pinfo.iph->protocol == SEVENTEEN) {
-                trans_hl = 8; //trans hl for udp (this is wrong)
+                trans_hl = EIGHT; //trans hl for udp (this is wrong)
                 payload = ip_len - (iphl + trans_hl);
             }
 
@@ -375,7 +375,7 @@ void s_option(FILE *f) {
             }
 
             printf("%s ", transport); 
-            if (pinfo.iph != NULL && (pinfo.iph->protocol == 6 || pinfo.iph->protocol == 17)) {
+            if (pinfo.iph != NULL && (pinfo.iph->protocol == SIX || pinfo.iph->protocol == SEVENTEEN)) {
                 printf("%d %i\n", trans_hl, payload); 
             }
             else if (pinfo.iph != NULL) {
@@ -386,11 +386,8 @@ void s_option(FILE *f) {
                 printf("%s %s\n", transhl_dash, transhl_dash); 
             }
 
-            ip_pkts++; 
         }
-        else {
-            ip_pkts++; 
-        }
+        
     }
 
 }
