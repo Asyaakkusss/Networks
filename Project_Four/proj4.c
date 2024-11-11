@@ -40,11 +40,11 @@ char transhl_questionmk[2] = "?";
 char transhl_dash[2] = "-"; 
 char syn_status[2] = "N"; 
 #define MAX_PKT_SIZE 1600
-#define FOUR 4
-#define NEG_ONE -1
-#define SIX 6
-#define SEVENTEEN 17
-#define EIGHT 8
+#define BYTE_CONVERSION 4
+#define INVALID_VAR -1
+#define TCP_PROTOCOL_NUMBER 6
+#define UDP_PROTOCOL_NUMBER 17
+#define UDP_HLEN 8
 //i option variables 
 int total_pkts = 0;
 int ip_pkts = 0; 
@@ -324,8 +324,8 @@ void s_option(FILE *f) {
         else if (pinfo.ethh->ether_type == ETHERTYPE_IP) {
             
             double ts = pinfo.now; //ts 
-            int ip_len = (pinfo.iph != NULL) ? ntohs(pinfo.iph->tot_len) : NEG_ONE; //ip_len
-            int iphl = (pinfo.iph != NULL) ? (pinfo.iph->ihl) * FOUR: NEG_ONE; //iphl
+            int ip_len = (pinfo.iph != NULL) ? ntohs(pinfo.iph->tot_len) : INVALID_VAR; //ip_len
+            int iphl = (pinfo.iph != NULL) ? (pinfo.iph->ihl) * BYTE_CONVERSION: INVALID_VAR; //iphl
             int caplen = pinfo.caplen; //caplen
             int trans_hl; 
             int payload; 
@@ -334,11 +334,11 @@ void s_option(FILE *f) {
                 strcpy(transport, "-"); //transport doesn't exist bc ip header doesn't exist 
             }
 
-            else if (pinfo.iph->protocol == SIX) {
+            else if (pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) {
                 strcpy(transport, "T"); //transport (tcp)
             }
 
-            else if (pinfo.iph->protocol == SEVENTEEN) {
+            else if (pinfo.iph->protocol == UDP_PROTOCOL_NUMBER) {
                 strcpy(transport, "U"); //transport (udp)
             }
 
@@ -347,14 +347,14 @@ void s_option(FILE *f) {
             }
 
 
-            if (pinfo.iph != NULL && pinfo.iph->protocol == SIX) {
-                trans_hl = (pinfo.tcph->doff) * FOUR; //trans hl for tcp (this is wrong)
+            if (pinfo.iph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) {
+                trans_hl = (pinfo.tcph->doff) * BYTE_CONVERSION; //trans hl for tcp (this is wrong)
                 payload = ip_len - (iphl + trans_hl); 
 
             }
 
-            if (pinfo.iph != NULL && pinfo.iph->protocol == SEVENTEEN) {
-                trans_hl = EIGHT; //trans hl for udp (this is wrong)
+            if (pinfo.iph != NULL && pinfo.iph->protocol == UDP_PROTOCOL_NUMBER) {
+                trans_hl = UDP_HLEN; //trans hl for udp (this is wrong)
                 payload = ip_len - (iphl + trans_hl);
             }
 
@@ -376,9 +376,13 @@ void s_option(FILE *f) {
 
             printf("%s ", transport); 
             if (pinfo.iph != NULL) {
-                if (pinfo.iph->protocol == SIX || pinfo.iph->protocol == SEVENTEEN) {
+                if ((pinfo.tcph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) || pinfo.iph->protocol == UDP_PROTOCOL_NUMBER) {
                    printf("%d %i\n", trans_hl, payload);
             } 
+                else if ((pinfo.tcph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER)) {
+                    printf("%s %s\n", transhl_dash, transhl_dash);  
+
+                }
 
                 else {
                    printf("%s %s\n", transhl_questionmk, transhl_questionmk);
@@ -513,8 +517,8 @@ void process_trace_file(FILE *f, struct traffic_info **table, int *count) {
         }
 
         // Calculate application layer data size
-        int ip_header_len = pinfo.iph->ihl * FOUR;
-        int tcp_header_len = pinfo.tcph->doff * FOUR;
+        int ip_header_len = pinfo.iph->ihl * BYTE_CONVERSION;
+        int tcp_header_len = pinfo.tcph->doff * BYTE_CONVERSION;
         int pkt_size = ntohs(pinfo.iph->tot_len) - (ip_header_len + tcp_header_len);
 
         struct in_addr src_ip, dst_ip;
