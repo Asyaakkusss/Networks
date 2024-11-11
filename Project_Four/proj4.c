@@ -438,7 +438,7 @@ void t_option(FILE *f) {
     uint32_t seqno; 
 
     while (next_packet(fd, &pinfo)) {
-        if (pinfo.tcph == NULL) {
+        if (pinfo.tcph == NULL || pinfo.tcph->doff == 0) {
             continue; 
         }
 
