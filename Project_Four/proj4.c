@@ -375,16 +375,21 @@ void s_option(FILE *f) {
             }
 
             printf("%s ", transport); 
-            if (pinfo.iph != NULL && (pinfo.iph->protocol == SIX || pinfo.iph->protocol == SEVENTEEN)) {
-                printf("%d %i\n", trans_hl, payload); 
-            }
-            else if (pinfo.iph != NULL) {
-                printf("%s %s\n", transhl_questionmk, transhl_questionmk); 
+            if (pinfo.iph != NULL) {
+                if (pinfo.iph->protocol == SIX || pinfo.iph->protocol == SEVENTEEN) {
+                   printf("%d %i\n", trans_hl, payload);
+            } 
+
+                else {
+                   printf("%s %s\n", transhl_questionmk, transhl_questionmk);
             }
 
-            else {
-                printf("%s %s\n", transhl_dash, transhl_dash); 
+} 
+           else if (pinfo.iph == NULL) {
+                printf("%s %s\n", transhl_dash, transhl_dash);  
             }
+
+
 
         }
         
@@ -488,8 +493,8 @@ void update_traffic_struct(struct traffic_info **table, int *count, struct in_ad
     // If it doesn't exist, add it in
     *table = realloc(*table, (*count + sizeof(unsigned char)) * sizeof(struct traffic_info));
     if (*table == NULL) {
-        perror("Failed to realloc memory for traffic table");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "Failed to realloc memory for traffic table");
+        exit(1);
     }
 
     (*table)[*count].src_ip = src_ip;
@@ -503,7 +508,7 @@ void process_trace_file(FILE *f, struct traffic_info **table, int *count) {
     struct pkt_info pinfo;
 
     while (next_packet(fileno(f), &pinfo)) {
-        if (pinfo.tcph == NULL) {
+        if (pinfo.tcph == NULL || pinfo.tcph->doff == 0) {
             continue; 
         }
 
