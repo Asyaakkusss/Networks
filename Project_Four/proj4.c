@@ -192,9 +192,13 @@ unsigned short next_packet (int fd, struct pkt_info *pinfo)
         /* we don't have anything beyond the ethernet header to process */
         return (1);
     pinfo->iph = (struct iphdr *)(pinfo->pkt + sizeof(struct ether_header));
-
     if (pinfo->iph->protocol == IPPROTO_TCP) {
+        if (pinfo->caplen <= (((pinfo->iph->ihl) * BYTE_CONVERSION) + 14)) {
+            pinfo->tcph = NULL; 
+        }
+        else {
         pinfo->tcph = (struct tcphdr *)(pinfo->pkt + sizeof(struct ether_header) + (pinfo->iph->ihl * 4)); 
+        }
     }
 
     if (pinfo->iph->protocol == IPPROTO_UDP) {
@@ -347,7 +351,7 @@ void s_option(FILE *f) {
             }
 
 
-            if (pinfo.iph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) {
+            if (pinfo.iph != NULL && pinfo.tcph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) {
                 trans_hl = (pinfo.tcph->doff) * BYTE_CONVERSION; //trans hl for tcp (this is wrong)
                 payload = ip_len - (iphl + trans_hl); 
 
@@ -376,9 +380,13 @@ void s_option(FILE *f) {
 
             printf("%s ", transport); 
             if (pinfo.iph != NULL) {
+                if (pinfo.tcph == NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) {
+                    printf("%s %s\n", transhl_dash, transhl_dash); 
+                    continue;  
+                }
                 if ((pinfo.tcph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER) || pinfo.iph->protocol == UDP_PROTOCOL_NUMBER) {
-                   printf("%d %i\n", trans_hl, payload);
-            } 
+                    printf("%d %i\n", trans_hl, payload);
+                } 
                 else if ((pinfo.tcph != NULL && pinfo.iph->protocol == TCP_PROTOCOL_NUMBER)) {
                     printf("%s %s\n", transhl_dash, transhl_dash);  
 
